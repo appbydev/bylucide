@@ -1,0 +1,89 @@
+'use client';
+import * as React from 'react';
+import { icons as lucideIcons } from 'lucide-react';
+import type { LegacyAnimationControls } from 'motion/react';
+import type { IconProps } from './types';
+
+export interface IconDriver {
+  play(signal: AbortSignal): Promise<void>;
+  reset(): void;
+}
+export interface IconSvgProps { size: number; color?: string; strokeWidth: number; reduced?: boolean; register(driver: IconDriver | null): void }
+export type IconSvg = React.ComponentType<IconSvgProps>;
+
+export function useControlsDriver(register: IconSvgProps['register'], ...controls: LegacyAnimationControls[]) {
+  const current = React.useRef(controls);
+  current.current = controls;
+  const play = React.useRef<Promise<void> | null>(null);
+  React.useLayoutEffect(() => {
+    const driver: IconDriver = {
+      async play(signal) {
+        if (signal.aborted) return;
+        const completed = Promise.all(current.current.map(control => control.start('animate'))).then(() => {});
+        play.current = completed;
+        let onAbort: (() => void) | undefined;
+        try {
+          await Promise.race([completed, new Promise<void>(resolve => {
+            onAbort = () => { current.current.forEach(control => control.stop()); resolve(); };
+            signal.addEventListener('abort', onAbort, { once: true });
+          })]);
+        } finally { if (onAbort) signal.removeEventListener('abort', onAbort); if (play.current === completed) play.current = null; }
+      },
+      reset() { current.current.forEach(control => { control.stop(); control.set('normal'); }); },
+    };
+    register(driver);
+    return () => { current.current.forEach(control => control.stop()); register(null); };
+  }, [register]);
+}
+
+const subscribe = (notify: () => void) => {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  media.addEventListener('change', notify);
+  return () => media.removeEventListener('change', notify);
+};
+const snapshot = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+export function useReduced() { return React.useSyncExternalStore(subscribe, snapshot, () => false); }
+
+export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
+  const reduced = useReduced();
+  const symbol = name.split('-').map(part => part[0]!.toUpperCase() + part.slice(1)).join('').replace(/([0-9])-([0-9])/g, '$1$2').replace(/3D$/, '3d');
+  const staticIcon = (lucideIcons as Record<string, React.ComponentType<any>>)[symbol];
+  const [hovered, setHovered] = React.useState(false);
+  const [driver, setDriver] = React.useState<IconDriver | null>(null);
+  const presentDriver = React.useRef<IconDriver | null>(null);
+  const registerDriver = React.useCallback((next: IconDriver | null) => {
+    presentDriver.current = next;
+    setDriver(next);
+  }, []);
+  const controller = React.useRef<AbortController | null>(null);
+  const label = rest['aria-label'] || rest['aria-labelledby'];
+  React.useEffect(() => {
+    if (!driver || reduced || loop === false || (loop === 'hover' && !hovered)) {
+      controller.current?.abort();
+      controller.current = null;
+      if (driver && presentDriver.current === driver && !reduced && (loop === false || (loop === 'hover' && !hovered))) driver.reset();
+      return;
+    }
+    const token = new AbortController();
+    controller.current = token;
+    const run = async () => {
+      while (!token.signal.aborted) {
+        try { await driver.play(token.signal); } catch { break; }
+        if (token.signal.aborted) break;
+        driver.reset();
+        // Yield once so a zero-duration animation cannot starve the event loop.
+        await new Promise<void>(resolve => {
+          const onAbort = () => { clearTimeout(id); resolve(); };
+          const id = setTimeout(() => { token.signal.removeEventListener('abort', onAbort); resolve(); }, 0);
+          token.signal.addEventListener('abort', onAbort, { once: true });
+        });
+      }
+    };
+    void run();
+    return () => { token.abort(); if (controller.current === token) controller.current = null; if (presentDriver.current === driver) driver.reset(); };
+  }, [driver, reduced, loop, hovered]);
+  const display = reduced && staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : Svg ? <Svg size={size} color={color} strokeWidth={strokeWidth} reduced={reduced} register={registerDriver} /> : staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : null;
+  if (!display) return null;
+  return <span {...rest} ref={ref} data-icon={name} aria-hidden={rest['aria-hidden'] ?? (label ? undefined : true)} role={rest.role ?? (label ? 'img' : undefined)} style={{ display: 'inline-flex', verticalAlign: 'middle', ...style, color }} onMouseEnter={event => { setHovered(true); onMouseEnter?.(event); }} onMouseLeave={event => { setHovered(false); onMouseLeave?.(event); }}>{display}</span>;
+});

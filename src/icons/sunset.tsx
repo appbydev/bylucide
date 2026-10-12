@@ -1,0 +1,43 @@
+'use client';
+import * as React from 'react';
+import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
+import type { IconSvgProps } from '../icon-runtime';
+import { useControlsDriver } from '../icon-runtime';
+
+const ARROW_VARIANTS: Variants = {
+    normal: {
+        y: 0,
+    },
+    animate: {
+        y: [0, 1, 0],
+    },
+};
+const RAYS_VARIANTS: Variants = {
+    normal: { opacity: 1 },
+    animate: (i: number) => ({
+        opacity: [0, 1],
+        transition: { delay: i * 0.1, duration: 0.3 },
+    }),
+};
+export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
+ const arrowControls = useAnimation();
+const raysControls = useAnimation();
+ 
+ useControlsDriver(register, arrowControls, raysControls);
+ return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+          <motion.g animate={arrowControls} initial="normal" variants={ARROW_VARIANTS}>
+            <path d="M12 10V2"/>
+            <path d="m16 6-4 4-4-4"/>
+          </motion.g>
+
+          {[
+        "m4.93 10.93 1.41 1.41",
+        "M2 18h2",
+        "M20 18h2",
+        "m19.07 10.93-1.41 1.41",
+        "M22 22H2",
+        ,
+    ].map((d, index) => (<motion.path animate={raysControls} custom={index + 1} d={d} initial="normal" key={d} variants={RAYS_VARIANTS}/>))}
+          <path d="M16 18a4 4 0 0 0-8 0"/>
+        </svg>);
+}
