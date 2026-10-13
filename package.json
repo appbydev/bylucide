@@ -14,6 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
+    "demo": "vite --config demo/vite.config.ts --host 0.0.0.0",
+    "demo:build": "vite build --config demo/vite.config.ts",
     "build": "tsup src/index.tsx --format esm --dts --out-dir dist --external react,react-dom,motion,lucide-react",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
@@ -35,6 +37,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "tsup": "8.5.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite": "^8.3.4"
   }
 }
