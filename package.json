@@ -16,6 +16,7 @@
   "scripts": {
     "demo": "vite --config demo/vite.config.ts --host 0.0.0.0",
     "demo:build": "vite build --config demo/vite.config.ts",
+    "generate:icons": "bun scripts/generate-icons.ts",
     "build": "tsup src/index.tsx --format esm --dts --out-dir dist --external react,react-dom,motion,lucide-react",
     "typecheck": "tsc --noEmit",
     "test": "bun test"

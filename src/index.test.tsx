@@ -3,9 +3,14 @@ import { Window } from 'happy-dom';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
-import { readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
 import { Icon, ArrowDownIcon, normalizeName, manifest } from './index';
 import { iconRegistry } from './icon-registry';
+import addedColorIcons from './icon-additions.json';
+import baseAnimatedIcons from './icon-base-manifest.json';
+import sourceColorExports from './icon-source-exports.json';
+import { lucideNames } from './lucide-catalog';
 import type { IconDriver, IconSvgProps } from './icon-runtime';
 import { createVolumeController } from './volume-cycle';
 
@@ -18,12 +23,12 @@ beforeAll(() => {
 afterEach(() => cleanup());
 
 describe('arquitetura e catálogo unificado', () => {
-  test('590 ícones, catálogo alinhado aos módulos locais', () => {
+  test('catálogo local alinhado aos módulos locais', () => {
     const names = manifest.icons;
-    expect(names.length).toBe(590);
+    expect(names.length).toBe(1698);
     expect(new Set(names).size).toBe(names.length);
     expect(Object.keys(iconRegistry).sort()).toEqual(names.sort());
-    const files = readdirSync('src/icons').sort();
+    const files = readdirSync('src/icons').filter(file => file.endsWith('.tsx')).sort();
     expect(files).toEqual(names.map(name => `${name}.tsx`).sort());
     for (const name of names) expect(name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     expect(names).toContain('database');
@@ -33,6 +38,28 @@ describe('arquitetura e catálogo unificado', () => {
     expect(normalizeName('ArrowDownIcon')).toBe('arrow-down');
     expect(normalizeName('axis-3d')).toBe('axis-3d');
     expect(typeof ArrowDownIcon).toBe('object');
+  });
+  test('módulos adicionados mapeiam para ícones canônicos e arquivos antigos intactos', () => {
+    const additions = addedColorIcons.map(icon => icon.canonical).sort();
+    const base = [...baseAnimatedIcons].sort();
+    expect(base.length).toBe(590);
+    expect(sourceColorExports.length).toBe(1933);
+    const expectedMissing = [...new Set(sourceColorExports.map(symbol => lucideNames[symbol]).filter((name): name is string => !!name && !base.includes(name)))].sort();
+    expect(additions).toEqual(expectedMissing);
+    expect(addedColorIcons.length).toBe(1108);
+    expect(additions.length).toBe(1108);
+    expect(manifest.icons).toEqual([...new Set([...base, ...additions])].sort());
+    for (const name of base) {
+      const file = `src/icons/${name}.tsx`;
+      const current = createHash('sha256').update(readFileSync(file)).digest('hex');
+      const hashes = JSON.parse(readFileSync('src/icon-base-hashes.json', 'utf8'));
+      expect(current, file).toBe(hashes[name]);
+    }
+    for (const name of additions) {
+      if (!manifest.icons.includes(name)) continue;
+      const source = readFileSync(`src/icons/${name}.tsx`, 'utf8');
+      expect(base).not.toContain(name);
+    }
   });
   test('cada ícone renderiza SVG e geometria com props reais, incluindo exceções', () => {
     for (const name of manifest.icons) {

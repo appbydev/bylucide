@@ -1,6 +1,6 @@
 # ByLucide
 
-Biblioteca interna de componentes React para ícones Lucide, com 590 implementações animadas locais e fallback estático do `lucide-react` para nomes disponíveis nele. A API inclui componentes nomeados, seleção dinâmica por nome e tipos TypeScript.
+Biblioteca interna de componentes React para ícones Lucide, com 1.698 implementações animadas locais e fallback estático do `lucide-react` para nomes disponíveis nele. A API inclui componentes nomeados, seleção dinâmica por nome e tipos TypeScript.
 
 ## Sumário
 
@@ -97,19 +97,25 @@ Sem `aria-label` ou `aria-labelledby`, o `span` é decorativo por padrão (`aria
 
 ## Catálogo, aliases e criação de componentes
 
-`src/icon-manifest.json` é exportado como `manifest`. `manifest.icons` é uma lista dos **590 nomes canônicos**; `manifest.aliases` mapeia grafias alternativas para nomes canônicos. A quantidade pode ser consultada com `manifest.icons.length`. Para consultar o catálogo completo, use [`src/icon-manifest.json`](src/icon-manifest.json) e os exports em [`src/icon-exports.ts`](src/icon-exports.ts).
+`src/icon-manifest.json` é exportado como `manifest`. `manifest.icons` é uma lista dos **1.698 nomes canônicos**; `manifest.aliases` mapeia grafias alternativas para nomes canônicos. A quantidade pode ser consultada com `manifest.icons.length`. Para consultar o catálogo completo, use [`src/icon-manifest.json`](src/icon-manifest.json) e os exports em [`src/icon-exports.ts`](src/icon-exports.ts).
 
-`normalizeName` aceita nomes como `arrow-down`, `ArrowDown` e `arrowDown`, além do sufixo `Icon`; aplica aliases conhecidos, mas **não verifica se o nome existe**. `createIcon(name)` cria um componente com nome predefinido e `ref` para o `span`; não adiciona um novo SVG ao catálogo. Exemplos reais:
+Todos os 6.411 exports de componentes do `lucide-react@1.55.0` são oferecidos pelo wrapper: `House`, `HouseIcon`, `LucideHouse` e aliases oficiais como `Home`, `Loader2`, `Code2` e `MoreHorizontal`. Os 14 ícones Lucide históricos removidos upstream (principalmente marcas) continuam disponíveis com suas animações locais. Não há aliases Iconoir.
+
+`normalizeName` aceita nomes oficiais PascalCase, variantes `Icon`/`Lucide` e suas grafias kebab-case; aliases apontam para a implementação animada local quando disponível. Nomes desconhecidos permanecem inalterados e `Icon` renderiza `null`. Não aceita sinônimos arbitrários como `airplane`, `attach-file` ou `key-circle`. `createIcon(name)` cria um componente com nome predefinido e `ref` para o `span`; não adiciona um novo SVG ao catálogo.
+
+Tipos públicos: `IconProps` para o seletor dinâmico, `NamedIconProps` e `IconComponent` para exports nomeados. `LucideProps` e `LucideIcon` são aliases de migração para esses tipos **do bylucide**, não o contrato SVG do pacote upstream: refs/eventos são de `HTMLSpanElement`, `size` é numérico e propriedades SVG específicas não são suportadas. Sem suporte React Native.
+
+Exemplos reais:
 
 ```tsx
 import { Icon, createIcon, manifest, normalizeName } from '../../bylucide/dist/index.js';
 import type { IconProps } from '../../bylucide/dist/index.js';
 
-const PlaneIcon = createIcon('airplane'); // alias de "plane"
+const PlaneIcon = createIcon('Plane'); // nome Lucide "plane"
 const canonical = normalizeName('ArrowDownIcon'); // "arrow-down"
-const numeric = normalizeName('arrow-down01'); // "arrow-down-0-1"
+const numeric = normalizeName('ArrowDown01'); // "arrow-down-0-1"
 const available = manifest.icons.includes(canonical); // true
-const alias = manifest.aliases.airplane; // "plane"
+const alias = manifest.aliases.house; // "home" (implementação animada local)
 
 export function Catalogo({ name }: { name: IconProps['name'] }) {
   return (
@@ -124,6 +130,8 @@ export function Catalogo({ name }: { name: IconProps['name'] }) {
 Para entradas de usuários, valide o nome antes de depender de sua presença. `Icon` procura primeiro uma implementação animada local; na ausência dela, tenta o nome correspondente em `lucide-react`. Se ambos falharem, renderiza `null`. O manifesto cobre o catálogo **animado local**, não todos os nomes estáticos aceitos pelo fallback.
 
 ## Desenvolvimento
+
+Após atualizar a versão fixada de `lucide-react`, execute `bun run generate:icons` para regenerar exports, resolução e aliases por identidade dos componentes upstream; depois reconstrua `dist`.
 
 Execute na raiz:
 
@@ -149,5 +157,5 @@ O build utiliza os módulos locais em `src/icons/`; não requer clonagem de outr
 
 - Nem todo nome de `lucide-react` tem animação local; o fallback estático depende de existir um export correspondente na versão instalada de `lucide-react`. Nomes não resolvidos não exibem marcador de erro: renderizam `null`.
 - O hover é acionado por entrada e saída do **ponteiro** (`onMouseEnter`/`onMouseLeave`); não há gatilho próprio por foco de teclado ou toque. Evite depender da animação para transmitir informação essencial.
-- Os testes cobrem catálogo e renderização, mas não substituem a inspeção visual e de comportamento dos 590 ícones em navegadores reais. Algumas animações têm repetição infinita interna; o runtime interrompe controles ao encerrar um ciclo de hover ou desmontar.
+- Os testes cobrem catálogo e renderização, mas não substituem a inspeção visual e de comportamento dos 1.698 ícones em navegadores reais. Algumas animações têm repetição infinita interna; o runtime interrompe controles ao encerrar um ciclo de hover ou desmontar.
 - O registro importa os módulos locais e o runtime importa o conjunto de ícones do `lucide-react`; não presuma redução garantida do pacote final ao importar apenas um componente nomeado.

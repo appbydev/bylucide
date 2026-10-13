@@ -1,6 +1,8 @@
 'use client';
 import * as React from 'react';
-import { icons as lucideIcons } from 'lucide-react';
+import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
+import { lucideSymbols } from './lucide-catalog';
+import { animatedIconCss } from './icon-animations.css';
 import type { LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
 
@@ -13,6 +15,35 @@ export type IconSvg = React.ComponentType<IconSvgProps>;
 
 export function useControlsDriver(register: IconSvgProps['register'], ...controls: LegacyAnimationControls[]) {
   useSequenceDriver(register, ['animate'], 'normal', ...controls);
+}
+
+export function useCssHoverDriver(register: IconSvgProps['register']) {
+  const ref = React.useRef<SVGSVGElement>(null);
+  React.useLayoutEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    const doc = svg.ownerDocument;
+    if (!doc.getElementById('bylucide-color-icon-styles')) {
+      const style = doc.createElement('style');
+      style.id = 'bylucide-color-icon-styles';
+      style.textContent = animatedIconCss;
+      doc.head.appendChild(style);
+    }
+    const reset = () => svg.classList.remove('bylucide-animate');
+    register({ reset, play(signal) {
+      if (signal.aborted) return Promise.resolve();
+      reset();
+      svg.getBoundingClientRect(); // Commit reset before restarting the CSS keyframes.
+      svg.classList.add('bylucide-animate');
+      return new Promise<void>(resolve => {
+        const finish = () => { clearTimeout(timer); signal.removeEventListener('abort', finish); reset(); resolve(); };
+        const timer = setTimeout(finish, 1260); // 700ms longest animation + 560ms maximum stagger.
+        signal.addEventListener('abort', finish, { once: true });
+      });
+    }});
+    return () => { reset(); register(null); };
+  }, [register]);
+  return ref;
 }
 
 // Play upstream's named phases in order, waiting for Motion's actual completion callbacks.
@@ -62,9 +93,10 @@ export function useReduced() { return React.useSyncExternalStore(subscribe, snap
 // Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
 export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
-  const symbol = name.split('-').map(part => part[0]!.toUpperCase() + part.slice(1)).join('').replace(/([0-9])-([0-9])/g, '$1$2').replace(/3D$/, '3d');
-  const staticIcon = (lucideIcons as Record<string, React.ComponentType<any>>)[symbol];
+  const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
+  const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);
+  const [animating, setAnimating] = React.useState(false);
   const [driver, setDriver] = React.useState<IconDriver | null>(null);
   const presentDriver = React.useRef<IconDriver | null>(null);
   const registerDriver = React.useCallback((next: IconDriver | null) => {
@@ -77,6 +109,7 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     if (!driver || reduced || loop === false || (loop === 'hover' && !hovered)) {
       controller.current?.abort();
       controller.current = null;
+      setAnimating(false);
       if (driver && presentDriver.current === driver && !reduced && (loop === false || (loop === 'hover' && !hovered))) driver.reset();
       return;
     }
@@ -84,7 +117,9 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     controller.current = token;
     const run = async () => {
       while (!token.signal.aborted) {
+        setAnimating(true);
         try { await driver.play(token.signal); } catch { break; }
+        setAnimating(false);
         if (token.signal.aborted) break;
         driver.reset();
         // Yield once so a zero-duration animation cannot starve the event loop.
