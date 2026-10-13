@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
 import { lucideSymbols } from './lucide-catalog';
-import { animatedIconCss } from './icon-animations.css';
+import './icon-animations.css';
 import type { LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
 
@@ -22,13 +22,6 @@ export function useCssHoverDriver(register: IconSvgProps['register']) {
   React.useLayoutEffect(() => {
     const svg = ref.current;
     if (!svg) return;
-    const doc = svg.ownerDocument;
-    if (!doc.getElementById('bylucide-color-icon-styles')) {
-      const style = doc.createElement('style');
-      style.id = 'bylucide-color-icon-styles';
-      style.textContent = animatedIconCss;
-      doc.head.appendChild(style);
-    }
     const reset = () => {
       // Transition-only upstream effects must return to rest before the next cycle.
       // Otherwise a rapid class toggle leaves fill-opacity at its previous target.

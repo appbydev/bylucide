@@ -10,9 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./dist/index.css"
   },
-  "sideEffects": false,
+  "sideEffects": ["**/*.css"],
   "scripts": {
     "demo": "vite --config demo/vite.config.ts --host 0.0.0.0",
     "demo:build": "vite build --config demo/vite.config.ts",

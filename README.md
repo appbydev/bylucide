@@ -28,9 +28,10 @@ bun install
 bun run build
 ```
 
-O build cria `dist/index.js` (ESM) e `dist/index.d.ts`. Em uma aplicação local, aponte o import para esse arquivo **após o build**. Por exemplo, se as pastas estiverem dispostas como `workspace/bylucide` e `workspace/app/src`, a partir de um arquivo em `app/src`:
+O build cria `dist/index.js` (ESM), `dist/index.d.ts` e `dist/index.css`. Ao consumir o pacote compilado, importe `import 'bylucide/styles.css';` uma vez na entrada da aplicação: o JavaScript compilado não carrega o CSS automaticamente. No consumo por caminho local, importe `dist/index.css`, como no exemplo abaixo. Em uma aplicação local, aponte o import para esse arquivo **após o build**. Por exemplo, se as pastas estiverem dispostas como `workspace/bylucide` e `workspace/app/src`, a partir de um arquivo em `app/src`:
 
 ```tsx
+import '../../bylucide/dist/index.css';
 import { ArrowDownIcon } from '../../bylucide/dist/index.js';
 
 export function Exemplo() {

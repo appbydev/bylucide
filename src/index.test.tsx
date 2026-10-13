@@ -251,7 +251,7 @@ test('actual CSS driver completes, restarts, resets, aborts and unregisters', as
   await second;
   await active.play(token.signal);
   expect(svg.classList.contains('bylucide-animate')).toBe(false);
-  expect(document.querySelectorAll('#bylucide-color-icon-styles').length).toBe(1);
+  expect(document.querySelectorAll('#bylucide-color-icon-styles').length).toBe(0);
   view.unmount();
   expect(driver).toBeNull();
 }, 3000);
