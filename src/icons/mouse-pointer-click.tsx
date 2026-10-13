@@ -14,6 +14,11 @@ const CURSOR_VARIANTS: Variants = {
             bounce: 0.3,
         },
     },
+    normal: { x: 0, y: 0 },
+    animate: {
+        x: [0, 0, -3, 0], y: [0, -4, 0, 0],
+        transition: { duration: 1, bounce: 0.3 },
+    },
 };
 const LINE_VARIANTS: Variants = {
     initial: { opacity: 1, x: 0, y: 0 },
@@ -30,6 +35,12 @@ const LINE_VARIANTS: Variants = {
             damping: 10,
             mass: 0.4,
         },
+    }),
+    normal: { opacity: 1, x: 0, y: 0 },
+    animate: (custom: { x: number; y: number }) => ({
+        opacity: [0, 1, 0, 0, 0, 0, 1],
+        x: [0, custom.x, 0, 0], y: [0, custom.y, 0, 0],
+        transition: { type: "spring", stiffness: 70, damping: 10, mass: 0.4 },
     }),
 };
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {

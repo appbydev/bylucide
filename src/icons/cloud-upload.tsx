@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
-import { useControlsDriver } from '../icon-runtime';
+import { useSequenceDriver } from '../icon-runtime';
 
 const CLOUD_VARIANTS: Variants = {
     initial: { y: -2 },
@@ -11,7 +11,7 @@ const CLOUD_VARIANTS: Variants = {
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  
- useControlsDriver(register, controls);
+ useSequenceDriver(register, ["initial","active"], 'active', controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <path d="M4.2 15.1A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.2"/>
           <motion.g animate={controls} transition={{

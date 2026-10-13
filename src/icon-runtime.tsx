@@ -12,14 +12,28 @@ export interface IconSvgProps { size: number; color?: string; strokeWidth: numbe
 export type IconSvg = React.ComponentType<IconSvgProps>;
 
 export function useControlsDriver(register: IconSvgProps['register'], ...controls: LegacyAnimationControls[]) {
+  useSequenceDriver(register, ['animate'], 'normal', ...controls);
+}
+
+// Play upstream's named phases in order, waiting for Motion's actual completion callbacks.
+export function useSequenceDriver(register: IconSvgProps['register'], phases: string[], resting: string, ...controls: LegacyAnimationControls[]) {
   const current = React.useRef(controls);
   current.current = controls;
+  const currentPhases = React.useRef(phases);
+  currentPhases.current = phases;
+  const currentResting = React.useRef(resting);
+  currentResting.current = resting;
   const play = React.useRef<Promise<void> | null>(null);
   React.useLayoutEffect(() => {
     const driver: IconDriver = {
       async play(signal) {
         if (signal.aborted) return;
-        const completed = Promise.all(current.current.map(control => control.start('animate'))).then(() => {});
+        const completed = (async () => {
+          for (const phase of currentPhases.current) {
+            if (signal.aborted) break;
+            await Promise.all(current.current.map(control => control.start(phase)));
+          }
+        })();
         play.current = completed;
         let onAbort: (() => void) | undefined;
         try {
@@ -29,7 +43,7 @@ export function useControlsDriver(register: IconSvgProps['register'], ...control
           })]);
         } finally { if (onAbort) signal.removeEventListener('abort', onAbort); if (play.current === completed) play.current = null; }
       },
-      reset() { current.current.forEach(control => { control.stop(); control.set('normal'); }); },
+      reset() { current.current.forEach(control => { control.stop(); control.set(currentResting.current); }); },
     };
     register(driver);
     return () => { current.current.forEach(control => control.stop()); register(null); };

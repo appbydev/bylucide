@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
-import { useControlsDriver } from '../icon-runtime';
+import { useSequenceDriver } from '../icon-runtime';
 
 const VARIANTS: Variants = {
     normal: {
@@ -28,7 +28,7 @@ const VARIANTS: Variants = {
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  
- useControlsDriver(register, controls);
+ useSequenceDriver(register, ["fadeOut","fadeIn"], 'normal', controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} custom={1} d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9" initial={{ opacity: 1 }} variants={VARIANTS}/>
           <motion.path animate={controls} custom={0} d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" initial={{ opacity: 1 }} variants={VARIANTS}/>

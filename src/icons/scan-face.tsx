@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
-import { useControlsDriver } from '../icon-runtime';
+import { useSequenceDriver } from '../icon-runtime';
 
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
@@ -31,7 +31,7 @@ const mouthVariants: Variants = {
         transition: { duration: 0.3, delay: 0.1 },
     },
 };
- useControlsDriver(register, controls);
+ useSequenceDriver(register, ["hidden","visible"], 'visible', controls);
  return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={faceVariants} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M3 7V5a2 2 0 0 1 2-2h2" initial="visible" variants={cornerVariants}/>
           <motion.path animate={controls} d="M17 3h2a2 2 0 0 1 2 2v2" initial="visible" variants={cornerVariants}/>

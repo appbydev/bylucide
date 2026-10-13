@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
-import { useControlsDriver } from '../icon-runtime';
+import { useSequenceDriver } from '../icon-runtime';
 
 const WIFI_LEVELS = [
     { d: "M12 20h.01", initialOpacity: 1, delay: 0 },
@@ -13,7 +13,7 @@ const WIFI_LEVELS = [
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  
- useControlsDriver(register, controls);
+ useSequenceDriver(register, ["fadeOut","fadeIn"], 'fadeIn', controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           {WIFI_LEVELS.map((level, index) => (<motion.path animate={controls} d={level.d} initial={{ opacity: level.initialOpacity }} key={index} variants={{
             fadeOut: {
