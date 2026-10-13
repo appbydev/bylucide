@@ -120,14 +120,44 @@ describe('lifecycle único', () => {
       removeEventListener(_event: string, listener: () => void) { listeners.delete(listener); },
     }) });
     try {
-      const view = render(<Icon name="arrow-down" loop="always" />);
+      const view = render(<Icon name="arrow-down" loop="always" reducedMotion="system" />);
       await act(async () => { reduced = true; listeners.forEach(listener => listener()); });
       expect(view.container.querySelector('svg')).toBeTruthy();
-      view.rerender(<Icon name="chrome" loop="always" />);
+      view.rerender(<Icon name="chrome" loop="always" reducedMotion="system" />);
       expect(view.container.querySelector('svg')).toBeTruthy();
       view.unmount();
       expect(listeners.size).toBe(0);
     } finally { Object.defineProperty(window, 'matchMedia', { configurable: true, value: original }); }
+  });
+  test('padrão ignora redução de movimento; system exige opt-in para fallback', async () => {
+    const originalMedia = window.matchMedia;
+    const originalIcon = iconRegistry['arrow-down'];
+    let plays = 0;
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+      matches: query.includes('prefers-reduced-motion'), media: query,
+      addEventListener() {}, removeEventListener() {},
+    }) });
+    const Animated = ({ register }: IconSvgProps) => {
+      React.useLayoutEffect(() => {
+        register({ play: async () => { plays++; }, reset() {} });
+        return () => register(null);
+      }, [register]);
+      return <svg data-animated="true" />;
+    };
+    iconRegistry['arrow-down'] = Animated;
+    try {
+      const view = render(<Icon name="arrow-down" loop="always" />);
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+      expect(plays).toBeGreaterThan(0);
+      expect(view.container.querySelector('svg[data-animated="true"]')).toBeTruthy();
+      view.rerender(<Icon name="arrow-down" loop="always" reducedMotion="system" />);
+      expect(view.container.querySelector('svg[data-animated="true"]')).toBeNull();
+      expect(view.container.querySelector('svg')).toBeTruthy();
+      view.unmount();
+    } finally {
+      iconRegistry['arrow-down'] = originalIcon!;
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMedia });
+    }
   });
   test('exceções preservam geometria e troca de estado em hover', async () => {
     for (const name of ['keyboard', 'volume', 'wifi-low', 'database', 'list', 'circle-check-big']) {

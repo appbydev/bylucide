@@ -73,6 +73,7 @@ export function Acoes() {
 | `color` | `string` | não definido | Cor passada ao SVG e aplicada ao `span`; sem valor, segue o estilo herdado do contexto. |
 | `strokeWidth` | `number` | `2` | Espessura do traço passada ao SVG. |
 | `loop` | `'hover' \| 'always' \| false` | `'hover'` | Controla a repetição da animação, quando houver implementação animada. |
+| `reducedMotion` | `'ignore' \| 'system'` | `'ignore'` | Por padrão força animações mesmo sob `prefers-reduced-motion: reduce`; use `'system'` para respeitar a preferência do usuário. |
 | `ref` | `React.Ref<HTMLSpanElement>` | não definido | Referência ao `span` externo, não ao SVG. |
 
 O elemento renderizado é um `span` com `display: inline-flex`, `vertical-align: middle` e `data-icon` com o nome normalizado. Eventos `onMouseEnter` e `onMouseLeave` fornecidos pelo consumidor são chamados junto com o controle interno do hover. Se nenhum SVG local ou estático puder ser resolvido, o componente retorna `null` (não cria `span`).
@@ -92,7 +93,7 @@ Sem `aria-label` ou `aria-labelledby`, o `span` é decorativo por padrão (`aria
 <Icon name="plane" aria-label="Avião" />
 ```
 
-Quando `prefers-reduced-motion: reduce` está ativo, o runtime não inicia a animação e usa o componente estático do `lucide-react` se existir. Quando não há equivalente estático, conserva a geometria local sem iniciar a animação. A preferência é observada também quando muda durante o uso.
+**Escolha deliberada de acesso:** sem `reducedMotion`, a biblioteca ignora `prefers-reduced-motion: reduce` para manter as animações disponíveis por padrão, inclusive sob essa preferência do navegador/OS. Para respeitar a preferência de acessibilidade, passe `reducedMotion="system"` explicitamente (por exemplo, numa aplicação que oferece essa opção ao usuário). Nesse modo, quando `prefers-reduced-motion: reduce` está ativo, o runtime não inicia a animação e usa o componente estático do `lucide-react` se existir. Quando não há equivalente estático, conserva a geometria local sem iniciar a animação. A preferência também é observada quando muda durante o uso.
 
 ## Catálogo, aliases e criação de componentes
 

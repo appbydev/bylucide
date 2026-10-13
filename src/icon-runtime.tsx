@@ -59,8 +59,9 @@ const subscribe = (notify: () => void) => {
 const snapshot = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 export function useReduced() { return React.useSyncExternalStore(subscribe, snapshot, () => false); }
 
-export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
-  const reduced = useReduced();
+// Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
+export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
+  const reduced = useReduced() && reducedMotion !== 'ignore';
   const symbol = name.split('-').map(part => part[0]!.toUpperCase() + part.slice(1)).join('').replace(/([0-9])-([0-9])/g, '$1$2').replace(/3D$/, '3d');
   const staticIcon = (lucideIcons as Record<string, React.ComponentType<any>>)[symbol];
   const [hovered, setHovered] = React.useState(false);
