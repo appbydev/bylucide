@@ -29,7 +29,16 @@ export function useCssHoverDriver(register: IconSvgProps['register']) {
       style.textContent = animatedIconCss;
       doc.head.appendChild(style);
     }
-    const reset = () => svg.classList.remove('bylucide-animate');
+    const reset = () => {
+      // Transition-only upstream effects must return to rest before the next cycle.
+      // Otherwise a rapid class toggle leaves fill-opacity at its previous target.
+      const fills = Array.from(svg.querySelectorAll<SVGElement>('.al-anim-fill'));
+      const transitions = fills.map(node => node.style.transition);
+      fills.forEach(node => { node.style.transition = 'none'; });
+      svg.classList.remove('bylucide-animate');
+      fills.forEach(node => { void getComputedStyle(node).fillOpacity; });
+      fills.forEach((node, index) => { node.style.transition = transitions[index]!; });
+    };
     register({ reset, play(signal) {
       if (signal.aborted) return Promise.resolve();
       reset();
@@ -96,7 +105,6 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);
-  const [animating, setAnimating] = React.useState(false);
   const [driver, setDriver] = React.useState<IconDriver | null>(null);
   const presentDriver = React.useRef<IconDriver | null>(null);
   const registerDriver = React.useCallback((next: IconDriver | null) => {
@@ -109,7 +117,6 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     if (!driver || reduced || loop === false || (loop === 'hover' && !hovered)) {
       controller.current?.abort();
       controller.current = null;
-      setAnimating(false);
       if (driver && presentDriver.current === driver && !reduced && (loop === false || (loop === 'hover' && !hovered))) driver.reset();
       return;
     }
@@ -117,9 +124,7 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     controller.current = token;
     const run = async () => {
       while (!token.signal.aborted) {
-        setAnimating(true);
         try { await driver.play(token.signal); } catch { break; }
-        setAnimating(false);
         if (token.signal.aborted) break;
         driver.reset();
         // Yield once so a zero-duration animation cannot starve the event loop.

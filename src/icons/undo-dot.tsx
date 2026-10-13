@@ -1,6 +1,5 @@
 'use client';
-import * as React from 'react';
-import { motion, useAnimation, cubicBezier, type Variants, type Transition } from 'motion/react';
+import { motion, useAnimation, cubicBezier } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 

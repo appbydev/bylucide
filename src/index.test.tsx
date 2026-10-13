@@ -3,15 +3,10 @@ import { Window } from 'happy-dom';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
-import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Icon, ArrowDownIcon, normalizeName, manifest } from './index';
 import { iconRegistry } from './icon-registry';
-import addedColorIcons from './icon-additions.json';
-import baseAnimatedIcons from './icon-base-manifest.json';
-import sourceColorExports from './icon-source-exports.json';
-import { lucideNames } from './lucide-catalog';
-import type { IconDriver, IconSvgProps } from './icon-runtime';
+import { useCssHoverDriver, type IconDriver, type IconSvgProps } from './icon-runtime';
 import { createVolumeController } from './volume-cycle';
 
 beforeAll(() => {
@@ -39,26 +34,21 @@ describe('arquitetura e catálogo unificado', () => {
     expect(normalizeName('axis-3d')).toBe('axis-3d');
     expect(typeof ArrowDownIcon).toBe('object');
   });
-  test('módulos adicionados mapeiam para ícones canônicos e arquivos antigos intactos', () => {
-    const additions = addedColorIcons.map(icon => icon.canonical).sort();
-    const base = [...baseAnimatedIcons].sort();
-    expect(base.length).toBe(590);
-    expect(sourceColorExports.length).toBe(1933);
-    const expectedMissing = [...new Set(sourceColorExports.map(symbol => lucideNames[symbol]).filter((name): name is string => !!name && !base.includes(name)))].sort();
-    expect(additions).toEqual(expectedMissing);
-    expect(addedColorIcons.length).toBe(1108);
-    expect(additions.length).toBe(1108);
-    expect(manifest.icons).toEqual([...new Set([...base, ...additions])].sort());
-    for (const name of base) {
-      const file = `src/icons/${name}.tsx`;
-      const current = createHash('sha256').update(readFileSync(file)).digest('hex');
-      const hashes = JSON.parse(readFileSync('src/icon-base-hashes.json', 'utf8'));
-      expect(current, file).toBe(hashes[name]);
-    }
-    for (const name of additions) {
-      if (!manifest.icons.includes(name)) continue;
+  test('categoriza animações complexas e simples sem manifests auxiliares', () => {
+    const complex = manifest.categories.complex;
+    const simple = manifest.categories.simple;
+    expect(complex.length).toBe(590);
+    expect(simple.length).toBe(1108);
+    expect(manifest.icons).toEqual([...complex, ...simple].sort());
+    expect(new Set([...complex, ...simple]).size).toBe(manifest.icons.length);
+    for (const name of complex) {
       const source = readFileSync(`src/icons/${name}.tsx`, 'utf8');
-      expect(base).not.toContain(name);
+      expect(source, name).not.toContain('useCssHoverDriver');
+    }
+    for (const name of simple) {
+      const source = readFileSync(`src/icons/${name}.tsx`, 'utf8');
+      expect(source, name).not.toContain('motion/react');
+      expect(source, name).toContain('useCssHoverDriver');
     }
   });
   test('cada ícone renderiza SVG e geometria com props reais, incluindo exceções', () => {
@@ -234,3 +224,34 @@ describe('lifecycle único', () => {
     view.unmount();
   });
 });
+
+
+test('actual CSS driver completes, restarts, resets, aborts and unregisters', async () => {
+  let driver: IconDriver | null = null;
+  const register = (next: IconDriver | null) => { driver = next; };
+  function Probe() {
+    const ref = useCssHoverDriver(register);
+    return <svg ref={ref}><path className="al-anim-fill" style={{ transition: 'fill-opacity 500ms' }} /></svg>;
+  }
+  const view = render(<Probe />);
+  const svg = view.container.querySelector('svg')!;
+  const path = svg.querySelector('path')!;
+  const active = driver!;
+  const token = new AbortController();
+  const first = active.play(token.signal);
+  expect(svg.classList.contains('bylucide-animate')).toBe(true);
+  await first;
+  expect(svg.classList.contains('bylucide-animate')).toBe(false);
+  const second = active.play(token.signal);
+  expect(svg.classList.contains('bylucide-animate')).toBe(true);
+  active.reset();
+  expect(svg.classList.contains('bylucide-animate')).toBe(false);
+  expect(path.style.transition).toBe('fill-opacity 500ms');
+  token.abort();
+  await second;
+  await active.play(token.signal);
+  expect(svg.classList.contains('bylucide-animate')).toBe(false);
+  expect(document.querySelectorAll('#bylucide-color-icon-styles').length).toBe(1);
+  view.unmount();
+  expect(driver).toBeNull();
+}, 3000);

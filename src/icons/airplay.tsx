@@ -1,6 +1,5 @@
 'use client';
-import * as React from 'react';
-import { motion, useAnimation, easeInOut, easeOut, type Variants, type Transition } from 'motion/react';
+import { motion, useAnimation, easeInOut, easeOut } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 

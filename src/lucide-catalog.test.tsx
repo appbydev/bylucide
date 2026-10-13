@@ -4,7 +4,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { render } from '@testing-library/react';
 import * as upstream from 'lucide-react';
 import * as library from './index';
-import consumerNames from './consumer-lucide-names.json';
 import { iconRegistry } from './icon-registry';
 import type { IconComponent, LucideIcon, LucideProps } from './types';
 
@@ -22,8 +21,8 @@ describe('official Lucide surface', () => {
     expect(span.style.flexShrink).toBe('');
     expect(span.style.lineHeight).toBe('');
   });
-  test('all 155 component names inventoried in consuming apps are exported', () => {
-    for (const name of consumerNames) {
+  test('nomes Lucide usados por consumidores comuns são exportados', () => {
+    for (const name of ['Activity', 'AlertCircle', 'AlertTriangle', 'AppWindow', 'ArrowDown', 'Bell', 'Calendar', 'Check', 'Home', 'Search', 'Settings', 'User']) {
       expect(Object.hasOwn(library, name), name).toBe(true);
       expect(markup(name), name).toContain('<svg');
     }

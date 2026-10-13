@@ -1,6 +1,5 @@
 'use client';
-import * as React from 'react';
-import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
+import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 const createPathVariants = (delay: number, duration = 0.4): Variants => ({

@@ -17,7 +17,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const current = React.useRef(controls); current.current = controls;
  React.useLayoutEffect(() => {
  register({
-   async play(signal) { await current.current.start((i: number) => ({ opacity: [1, 0.2, 1], transition: { duration: 1.5, times: [0, 0.5, 1], delay: i * 0.2 * Math.random(), repeat: 1, repeatType: 'reverse' } })); },
+   async play() { await current.current.start((i: number) => ({ opacity: [1, 0.2, 1], transition: { duration: 1.5, times: [0, 0.5, 1], delay: i * 0.2 * Math.random(), repeat: 1, repeatType: 'reverse' } })); },
    reset() { current.current.stop(); current.current.set({ opacity: 1 }); },
  });
  return () => register(null);

@@ -3,14 +3,6 @@ import * as React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { IconSvgProps, IconDriver } from './icon-runtime';
 
-/** Callbacks do Motion separados para que a transição de presença seja testável sem relógio. */
-export function createVolumePhases(advance: (phase: 'wave' | 'return' | 'idle') => void, complete: () => void) {
-  return {
-    waveFinished(active: boolean) { if (active) advance('return'); },
-    idleFinished(active: boolean) { if (active) { advance('idle'); complete(); } },
-  };
-}
-
 type Phase = 'idle' | 'wave' | 'return';
 
 /** Mesma máquina usada pelos callbacks de Motion e pelo driver do ícone. */
