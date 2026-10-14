@@ -39,13 +39,20 @@
 }
 
 .al-anim-fill {
-  fill: currentColor;
-  fill-opacity: 0;
-  transition: fill-opacity 500ms ease var(--al-delay, 0ms);
+  fill: none;
 }
 
 .bylucide-animate .al-anim-fill {
-  fill-opacity: 0.18;
+  animation: al-stroke-pulse 500ms ease var(--al-delay, 0ms) both;
+}
+
+@keyframes al-stroke-pulse {
+  0%, 100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.5;
+  }
 }
 
 .al-anim-draw {

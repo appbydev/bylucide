@@ -66344,7 +66344,7 @@ var lucideSymbols = {
 };
 
 // css-inline:C:\Users\Wilssola\WebstormProjects\appby\bylucide\src\icon-animations.css.inline-text
-var icon_animations_css_default = ".al-delay-0 {\n  --al-delay: 0ms;\n}\n\n.al-delay-1 {\n  --al-delay: 80ms;\n}\n\n.al-delay-2 {\n  --al-delay: 160ms;\n}\n\n.al-delay-3 {\n  --al-delay: 240ms;\n}\n\n.al-delay-4 {\n  --al-delay: 320ms;\n}\n\n.al-delay-5 {\n  --al-delay: 400ms;\n}\n\n.al-delay-6 {\n  --al-delay: 480ms;\n}\n\n.al-delay-7 {\n  --al-delay: 560ms;\n}\n\n.al-primary {\n  stroke: var(--animated-lucide-primary, var(--al-primary, currentColor));\n}\n\n.al-secondary {\n  stroke: var(--animated-lucide-secondary, var(--al-secondary, currentColor));\n}\n\n.al-anim-fill {\n  fill: currentColor;\n  fill-opacity: 0;\n  transition: fill-opacity 500ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-fill {\n  fill-opacity: 0.18;\n}\n\n.al-anim-draw {\n}\n\n.bylucide-animate .al-anim-draw {\n  animation: al-draw-in 600ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-draw-in {\n  0% {\n    stroke-dashoffset: var(--al-dash-len, 50);\n  }\n  100% {\n    stroke-dashoffset: 0;\n  }\n}\n\n.al-anim-draw-line {\n}\n\n.bylucide-animate .al-anim-draw-line {\n  animation: al-draw-line 500ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-draw-line {\n  0% {\n    stroke-dashoffset: var(--al-dash-len, 20);\n  }\n  100% {\n    stroke-dashoffset: 0;\n  }\n}\n\n.al-anim-fade {\n}\n\n.bylucide-animate .al-anim-fade {\n  animation: al-fade-pop 500ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-fade-pop {\n  0% {\n    opacity: 0.3;\n    transform: scale(0.92);\n  }\n  60% {\n    opacity: 1;\n    transform: scale(1.04);\n  }\n  100% {\n    opacity: 1;\n    transform: scale(1);\n  }\n}\n\n.al-anim-dot-appear {\n}\n\n.bylucide-animate .al-anim-dot-appear {\n  animation: al-dot-pop 500ms ease 200ms both;\n}\n\n@keyframes al-dot-pop {\n  0% {\n    transform: scale(1);\n  }\n  40% {\n    transform: scale(0.3);\n  }\n  70% {\n    transform: scale(1.3);\n  }\n  100% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-bar {\n  transform-origin: center bottom;\n}\n\n.bylucide-animate .al-anim-bar {\n  animation: al-bar-grow 600ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-bar-grow {\n  0% {\n    transform: scaleY(0.2);\n  }\n  60% {\n    transform: scaleY(1.08);\n  }\n  100% {\n    transform: scaleY(1);\n  }\n}\n\n.al-anim-scale-pop {\n  transform-origin: center;\n}\n\n.bylucide-animate .al-anim-scale-pop {\n  animation: al-scale-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-scale-pop {\n  0% {\n    transform: scale(1);\n  }\n  40% {\n    transform: scale(1.15);\n  }\n  100% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-pulse-element {\n}\n\n.bylucide-animate .al-anim-pulse-element {\n  animation: al-pulse 0.7s ease-in-out;\n}\n\n@keyframes al-pulse {\n  0%, 100% {\n    opacity: 1;\n  }\n  50% {\n    opacity: 0.3;\n  }\n}\n\n.al-anim-gear {\n  transform-origin: 12px 12px;\n  transition: transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-gear {\n  transform: rotate(var(--al-rotation, 90deg));\n}\n\n.al-anim-nudge {\n  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-nudge {\n  transform: translate(var(--al-tx, 0px), var(--al-ty, 0px));\n}\n\n.al-anim-bell-ring {\n  transform-origin: 12px 3px;\n}\n\n.bylucide-animate .al-anim-bell-ring {\n  animation: al-bell-ring 0.7s ease;\n}\n\n@keyframes al-bell-ring {\n  0% {\n    transform: rotate(0deg);\n  }\n  12% {\n    transform: rotate(14deg);\n  }\n  24% {\n    transform: rotate(-12deg);\n  }\n  36% {\n    transform: rotate(8deg);\n  }\n  48% {\n    transform: rotate(-5deg);\n  }\n  60% {\n    transform: rotate(2deg);\n  }\n  100% {\n    transform: rotate(0deg);\n  }\n}\n\n.al-anim-heart-beat {\n  transform-origin: 12px 13px;\n}\n\n.bylucide-animate .al-anim-heart-beat {\n  animation: al-heart-beat 0.8s ease;\n}\n\n@keyframes al-heart-beat {\n  0% {\n    transform: scale(1);\n  }\n  15% {\n    transform: scale(1.2);\n  }\n  30% {\n    transform: scale(1);\n  }\n  45% {\n    transform: scale(1.15);\n  }\n  60% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-rocket-lift {\n  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-rocket-lift {\n  transform: translate(1px, -1.5px);\n}\n\n.al-anim-handle-lift {\n  transition: transform 500ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-handle-lift {\n  transform: translateY(-1.5px);\n}\n\n.al-anim-page-turn {\n  transform-origin: left center;\n  transition: transform 500ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-page-turn {\n  transform: rotateY(-12deg);\n}\n\n.al-anim-menu-line {\n  transform-origin: left center;\n  transition: transform 400ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-menu-line {\n  transform: scaleX(var(--al-scale-x, 0.7));\n}\n\n.al-anim-mail-flap {\n  transform-origin: center top;\n}\n\n.bylucide-animate .al-anim-mail-flap {\n  animation: al-mail-flap 700ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-mail-flap {\n  0% {\n    transform: rotateX(0deg);\n  }\n  40% {\n    transform: rotateX(-30deg);\n  }\n  70% {\n    transform: rotateX(5deg);\n  }\n  100% {\n    transform: rotateX(0deg);\n  }\n}\n\n.al-anim-shake {\n  transform-origin: center;\n}\n\n.bylucide-animate .al-anim-shake {\n  animation: al-shake 600ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-shake {\n  0% {\n    transform: translateX(0) rotate(0deg);\n  }\n  15% {\n    transform: translateX(-1.5px) rotate(-3deg);\n  }\n  30% {\n    transform: translateX(1.5px) rotate(3deg);\n  }\n  45% {\n    transform: translateX(-1px) rotate(-2deg);\n  }\n  60% {\n    transform: translateX(1px) rotate(2deg);\n  }\n  75% {\n    transform: translateX(-0.5px) rotate(-1deg);\n  }\n  100% {\n    transform: translateX(0) rotate(0deg);\n  }\n}\n\n.al-anim-spin {\n  transform-origin: 12px 12px;\n}\n\n.bylucide-animate .al-anim-spin {\n  animation: al-spin 700ms cubic-bezier(0.4, 0, 0.2, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-spin {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n";
+var icon_animations_css_default = ".al-delay-0 {\n  --al-delay: 0ms;\n}\n\n.al-delay-1 {\n  --al-delay: 80ms;\n}\n\n.al-delay-2 {\n  --al-delay: 160ms;\n}\n\n.al-delay-3 {\n  --al-delay: 240ms;\n}\n\n.al-delay-4 {\n  --al-delay: 320ms;\n}\n\n.al-delay-5 {\n  --al-delay: 400ms;\n}\n\n.al-delay-6 {\n  --al-delay: 480ms;\n}\n\n.al-delay-7 {\n  --al-delay: 560ms;\n}\n\n.al-primary {\n  stroke: var(--animated-lucide-primary, var(--al-primary, currentColor));\n}\n\n.al-secondary {\n  stroke: var(--animated-lucide-secondary, var(--al-secondary, currentColor));\n}\n\n.al-anim-fill {\n  fill: none;\n}\n\n.bylucide-animate .al-anim-fill {\n  animation: al-stroke-pulse 500ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-stroke-pulse {\n  0%, 100% {\n    stroke-opacity: 1;\n  }\n  50% {\n    stroke-opacity: 0.5;\n  }\n}\n\n.al-anim-draw {\n}\n\n.bylucide-animate .al-anim-draw {\n  animation: al-draw-in 600ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-draw-in {\n  0% {\n    stroke-dashoffset: var(--al-dash-len, 50);\n  }\n  100% {\n    stroke-dashoffset: 0;\n  }\n}\n\n.al-anim-draw-line {\n}\n\n.bylucide-animate .al-anim-draw-line {\n  animation: al-draw-line 500ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-draw-line {\n  0% {\n    stroke-dashoffset: var(--al-dash-len, 20);\n  }\n  100% {\n    stroke-dashoffset: 0;\n  }\n}\n\n.al-anim-fade {\n}\n\n.bylucide-animate .al-anim-fade {\n  animation: al-fade-pop 500ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-fade-pop {\n  0% {\n    opacity: 0.3;\n    transform: scale(0.92);\n  }\n  60% {\n    opacity: 1;\n    transform: scale(1.04);\n  }\n  100% {\n    opacity: 1;\n    transform: scale(1);\n  }\n}\n\n.al-anim-dot-appear {\n}\n\n.bylucide-animate .al-anim-dot-appear {\n  animation: al-dot-pop 500ms ease 200ms both;\n}\n\n@keyframes al-dot-pop {\n  0% {\n    transform: scale(1);\n  }\n  40% {\n    transform: scale(0.3);\n  }\n  70% {\n    transform: scale(1.3);\n  }\n  100% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-bar {\n  transform-origin: center bottom;\n}\n\n.bylucide-animate .al-anim-bar {\n  animation: al-bar-grow 600ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-bar-grow {\n  0% {\n    transform: scaleY(0.2);\n  }\n  60% {\n    transform: scaleY(1.08);\n  }\n  100% {\n    transform: scaleY(1);\n  }\n}\n\n.al-anim-scale-pop {\n  transform-origin: center;\n}\n\n.bylucide-animate .al-anim-scale-pop {\n  animation: al-scale-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-scale-pop {\n  0% {\n    transform: scale(1);\n  }\n  40% {\n    transform: scale(1.15);\n  }\n  100% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-pulse-element {\n}\n\n.bylucide-animate .al-anim-pulse-element {\n  animation: al-pulse 0.7s ease-in-out;\n}\n\n@keyframes al-pulse {\n  0%, 100% {\n    opacity: 1;\n  }\n  50% {\n    opacity: 0.3;\n  }\n}\n\n.al-anim-gear {\n  transform-origin: 12px 12px;\n  transition: transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-gear {\n  transform: rotate(var(--al-rotation, 90deg));\n}\n\n.al-anim-nudge {\n  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-nudge {\n  transform: translate(var(--al-tx, 0px), var(--al-ty, 0px));\n}\n\n.al-anim-bell-ring {\n  transform-origin: 12px 3px;\n}\n\n.bylucide-animate .al-anim-bell-ring {\n  animation: al-bell-ring 0.7s ease;\n}\n\n@keyframes al-bell-ring {\n  0% {\n    transform: rotate(0deg);\n  }\n  12% {\n    transform: rotate(14deg);\n  }\n  24% {\n    transform: rotate(-12deg);\n  }\n  36% {\n    transform: rotate(8deg);\n  }\n  48% {\n    transform: rotate(-5deg);\n  }\n  60% {\n    transform: rotate(2deg);\n  }\n  100% {\n    transform: rotate(0deg);\n  }\n}\n\n.al-anim-heart-beat {\n  transform-origin: 12px 13px;\n}\n\n.bylucide-animate .al-anim-heart-beat {\n  animation: al-heart-beat 0.8s ease;\n}\n\n@keyframes al-heart-beat {\n  0% {\n    transform: scale(1);\n  }\n  15% {\n    transform: scale(1.2);\n  }\n  30% {\n    transform: scale(1);\n  }\n  45% {\n    transform: scale(1.15);\n  }\n  60% {\n    transform: scale(1);\n  }\n}\n\n.al-anim-rocket-lift {\n  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-rocket-lift {\n  transform: translate(1px, -1.5px);\n}\n\n.al-anim-handle-lift {\n  transition: transform 500ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-handle-lift {\n  transform: translateY(-1.5px);\n}\n\n.al-anim-page-turn {\n  transform-origin: left center;\n  transition: transform 500ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-page-turn {\n  transform: rotateY(-12deg);\n}\n\n.al-anim-menu-line {\n  transform-origin: left center;\n  transition: transform 400ms ease var(--al-delay, 0ms);\n}\n\n.bylucide-animate .al-anim-menu-line {\n  transform: scaleX(var(--al-scale-x, 0.7));\n}\n\n.al-anim-mail-flap {\n  transform-origin: center top;\n}\n\n.bylucide-animate .al-anim-mail-flap {\n  animation: al-mail-flap 700ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-mail-flap {\n  0% {\n    transform: rotateX(0deg);\n  }\n  40% {\n    transform: rotateX(-30deg);\n  }\n  70% {\n    transform: rotateX(5deg);\n  }\n  100% {\n    transform: rotateX(0deg);\n  }\n}\n\n.al-anim-shake {\n  transform-origin: center;\n}\n\n.bylucide-animate .al-anim-shake {\n  animation: al-shake 600ms ease var(--al-delay, 0ms) both;\n}\n\n@keyframes al-shake {\n  0% {\n    transform: translateX(0) rotate(0deg);\n  }\n  15% {\n    transform: translateX(-1.5px) rotate(-3deg);\n  }\n  30% {\n    transform: translateX(1.5px) rotate(3deg);\n  }\n  45% {\n    transform: translateX(-1px) rotate(-2deg);\n  }\n  60% {\n    transform: translateX(1px) rotate(2deg);\n  }\n  75% {\n    transform: translateX(-0.5px) rotate(-1deg);\n  }\n  100% {\n    transform: translateX(0) rotate(0deg);\n  }\n}\n\n.al-anim-spin {\n  transform-origin: 12px 12px;\n}\n\n.bylucide-animate .al-anim-spin {\n  animation: al-spin 700ms cubic-bezier(0.4, 0, 0.2, 1) var(--al-delay, 0ms) both;\n}\n\n@keyframes al-spin {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n";
 
 // src/inject-styles.ts
 var STYLE_ID = "bylucide-animations";
@@ -66467,6 +66467,8 @@ var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 2
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : void 0;
   const staticIcon = symbol ? icons_exports[symbol] : void 0;
   const [hovered, setHovered] = React4.useState(false);
+  const [visible, setVisible] = React4.useState(true);
+  const elementRef = React4.useRef(null);
   const [driver, setDriver] = React4.useState(null);
   const presentDriver = React4.useRef(null);
   const registerDriver = React4.useCallback((next) => {
@@ -66476,7 +66478,14 @@ var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 2
   const controller = React4.useRef(null);
   const label = rest["aria-label"] || rest["aria-labelledby"];
   React4.useEffect(() => {
-    if (!driver || reduced || loop === false || loop === "hover" && !hovered) {
+    const element = elementRef.current;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    const observer2 = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false));
+    observer2.observe(element);
+    return () => observer2.disconnect();
+  }, []);
+  React4.useEffect(() => {
+    if (!driver || !visible || reduced || loop === false || loop === "hover" && !hovered) {
       controller.current?.abort();
       controller.current = null;
       if (driver && presentDriver.current === driver && !reduced && (loop === false || loop === "hover" && !hovered)) driver.reset();
@@ -66512,16 +66521,21 @@ var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 2
       if (controller.current === token) controller.current = null;
       if (presentDriver.current === driver) driver.reset();
     };
-  }, [driver, reduced, loop, hovered]);
+  }, [driver, visible, reduced, loop, hovered]);
   const display = reduced && staticIcon ? React4.createElement(staticIcon, { size, color: color2, strokeWidth, "aria-hidden": true }) : Svg ? /* @__PURE__ */ jsx6(Svg, { size, color: color2, strokeWidth, reduced, register: registerDriver }) : staticIcon ? React4.createElement(staticIcon, { size, color: color2, strokeWidth, "aria-hidden": true }) : null;
   if (!display) return null;
-  return /* @__PURE__ */ jsx6("span", { ...rest, ref, "data-icon": name, "aria-hidden": rest["aria-hidden"] ?? (label ? void 0 : true), role: rest.role ?? (label ? "img" : void 0), style: { display: "inline-flex", verticalAlign: "middle", ...style, color: color2 }, onMouseEnter: (event) => {
+  const sizedDisplay = React4.cloneElement(display, { style: { width: "100%", height: "100%", ...display.props.style } });
+  return /* @__PURE__ */ jsx6("span", { ...rest, ref: (node) => {
+    elementRef.current = node;
+    if (typeof ref === "function") ref(node);
+    else if (ref) ref.current = node;
+  }, "data-icon": name, "aria-hidden": rest["aria-hidden"] ?? (label ? void 0 : true), role: rest.role ?? (label ? "img" : void 0), style: { display: "inline-flex", verticalAlign: "middle", ...style, color: color2 }, onMouseEnter: (event) => {
     setHovered(true);
     onMouseEnter?.(event);
   }, onMouseLeave: (event) => {
     setHovered(false);
     onMouseLeave?.(event);
-  }, children: display });
+  }, children: sizedDisplay });
 });
 
 // src/icons/a-arrow-down.tsx
@@ -72463,7 +72477,7 @@ function IconSvg176({ size, color: color2, strokeWidth, register }) {
 import { jsx as jsx183, jsxs as jsxs170 } from "react/jsx-runtime";
 var VARIANTS3 = {
   normal: { translateX: 0, translateY: 0 },
-  animate: { translateX: -4, translateY: 4 }
+  animate: { translateX: 1, translateY: -1 }
 };
 function IconSvg177({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
@@ -73874,18 +73888,18 @@ import { jsx as jsx230, jsxs as jsxs213 } from "react/jsx-runtime";
 function IconSvg224({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
-  return /* @__PURE__ */ jsxs213("svg", { fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, style: { color: color2, overflow: "visible" }, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
+  return /* @__PURE__ */ jsxs213("svg", { fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, style: { color: color2, overflow: "hidden" }, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
     /* @__PURE__ */ jsx230(motion2.path, { animate: controls, d: "M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z m4.03 3.58 -4.74 -2.85 m4.74 2.85 5-3 m-5 3v5.17", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: -1.5, translateY: 1.5 }
+      animate: { translateX: -1, translateY: 1 }
     } }),
     /* @__PURE__ */ jsx230(motion2.path, { animate: controls, d: "M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z m5 3-5-3 m5 3 4.74-2.85 M17 16.5v5.17", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: 1.5, translateY: 1.5 }
+      animate: { translateX: 1, translateY: 1 }
     } }),
     /* @__PURE__ */ jsx230(motion2.path, { animate: controls, d: "M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z M12 8 7.26 5.15 m4.74 2.85 4.74-2.85 M12 13.5V8", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: 0, translateY: -1.5 }
+      animate: { translateX: 0, translateY: -1 }
     } })
   ] });
 }
@@ -86812,18 +86826,18 @@ function IconSvg631({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
   return /* @__PURE__ */ jsxs603("svg", { style: { color: color2, overflow: "hidden" }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
-    /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M21 7h-3a2 2 0 0 1-2-2V2", variants: {
+    /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M21 7h-3a2 0 0 1-2-2V2", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: -2, translateY: 2 }
+      animate: { translateX: -1, translateY: 1 }
     } }),
     /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M21 6v6.5c0 .8-.7 1.5-1.5 1.5h-7c-.8 0-1.5-.7-1.5-1.5v-9c0-.8.7-1.5 1.5-1.5H17Z", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: -2, translateY: 2 }
+      animate: { translateX: 1, translateY: -1 }
     } }),
     /* @__PURE__ */ jsx637("path", { d: "M7 8v8.8c0 .3.2.6.4.8.2.2.5.4.8.4H15" }),
     /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M3 12v8.8c0 .3.2.6.4.8.2.2.5.4.8.4H11", variants: {
       normal: { translateX: 0, translateY: 0 },
-      animate: { translateX: 2, translateY: -2 }
+      animate: { translateX: 1, translateY: -1 }
     } })
   ] });
 }
@@ -88907,7 +88921,7 @@ function IconSvg703({ size, color: color2, strokeWidth, register }) {
   useControlsDriver(register, controls);
   return /* @__PURE__ */ jsxs668("svg", { style: { color: color2 }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
     /* @__PURE__ */ jsx709(motion2.line, { animate: controls, transition: DEFAULT_TRANSITION19, variants: {
-      animate: { translateY: -4 },
+      animate: { translateY: -2 },
       normal: {
         translateX: 0,
         rotate: 0,
@@ -88915,7 +88929,7 @@ function IconSvg703({ size, color: color2, strokeWidth, register }) {
       }
     }, x1: 22, x2: 2, y1: 6, y2: 6 }),
     /* @__PURE__ */ jsx709(motion2.line, { animate: controls, transition: DEFAULT_TRANSITION19, variants: {
-      animate: { translateY: 4 },
+      animate: { translateY: 2 },
       normal: {
         translateX: 0,
         rotate: 0,
@@ -88923,7 +88937,7 @@ function IconSvg703({ size, color: color2, strokeWidth, register }) {
       }
     }, x1: 22, x2: 2, y1: 18, y2: 18 }),
     /* @__PURE__ */ jsx709(motion2.line, { animate: controls, transition: DEFAULT_TRANSITION19, variants: {
-      animate: { translateX: -4 },
+      animate: { translateX: -2 },
       normal: {
         translateX: 0,
         rotate: 0,
@@ -88931,7 +88945,7 @@ function IconSvg703({ size, color: color2, strokeWidth, register }) {
       }
     }, x1: 6, x2: 6, y1: 2, y2: 22 }),
     /* @__PURE__ */ jsx709(motion2.line, { animate: controls, transition: DEFAULT_TRANSITION19, variants: {
-      animate: { translateX: 4 },
+      animate: { translateX: 2 },
       normal: {
         translateX: 0,
         rotate: 0,
