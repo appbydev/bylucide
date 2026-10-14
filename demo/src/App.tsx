@@ -44,7 +44,7 @@ const IconTile = memo(function IconTile({ name, motion }: { name: string; motion
     if (motion === 'always' && tile.current) return observeVisibility(tile.current, setVisible);
   }, [motion]);
   const playing = motion === 'always' ? visible : motion === 'hover' && (hovered || focused);
-  return <article ref={tile} className="tile" onPointerEnter={() => setHovered(true)} onPointerLeave={() => setHovered(false)} onPointerCancel={() => setHovered(false)} onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}><div className="glyph"><Icon name={name} size={28} loop={playing ? 'always' : false} reducedMotion="ignore"/></div><span className="icon-name">{name}</span><button className="copy" type="button" aria-label={`Copy ${name} icon code`} title={`Copy ${name}`} onClick={() => navigator.clipboard?.writeText(`<Icon name="${name}" />`)}>↗</button></article>;
+  return <article ref={tile} className="tile" onPointerEnter={() => setHovered(true)} onPointerLeave={() => setHovered(false)} onPointerCancel={() => setHovered(false)} onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}><div className="glyph"><Icon name={name} loop={playing ? 'always' : false} reducedMotion="ignore"/></div><span className="icon-name">{name}</span><button className="copy" type="button" aria-label="Copy icon name">copy</button></article>
 });
 
 const IconGrid = memo(function IconGrid({ icons, motion }: { icons: string[]; motion: Motion }) {
