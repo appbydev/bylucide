@@ -23,6 +23,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
                 opacity: 1,
                 transition: {
                     type: "spring",
+                    velocity: 0,
                     stiffness: 300,
                     damping: 20,
                     delay: level.delay,

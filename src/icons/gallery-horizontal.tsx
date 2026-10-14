@@ -17,6 +17,7 @@ const animations = {
                     x: [4 * Math.pow(-1, i + 1), 0],
                     transition: {
                         type: 'spring',
+                        velocity: 0,
                         stiffness: 150,
                         damping: 15,
                     },

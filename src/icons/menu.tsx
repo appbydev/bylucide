@@ -15,6 +15,7 @@ const LINE_VARIANTS: Variants = {
         opacity: custom === 2 ? 0 : 1,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 260,
             damping: 20,
         },

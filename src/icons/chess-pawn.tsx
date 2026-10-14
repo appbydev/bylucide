@@ -11,6 +11,7 @@ const HEAD_VARIANTS: Variants = {
         rotate: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 180,
             damping: 16,
         },
@@ -30,6 +31,7 @@ const BODY_VARIANTS: Variants = {
         rotate: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 260,
             damping: 16,
         },

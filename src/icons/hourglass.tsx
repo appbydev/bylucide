@@ -13,6 +13,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         transformOrigin: "12px 12px",
     }} transition={{
         type: "spring",
+        velocity: 0,
         stiffness: 100,
         damping: 15,
         mass: 1,

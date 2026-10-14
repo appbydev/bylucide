@@ -10,7 +10,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
     visible: { scale: 1 },
     hidden: {
         scale: 0.9,
-        transition: { type: "spring", stiffness: 200, damping: 20 },
+        transition: { type: "spring", velocity: 0, stiffness: 200, damping: 20 },
     },
 };
 const cornerVariants: Variants = {
@@ -19,7 +19,7 @@ const cornerVariants: Variants = {
         scale: 1.2,
         rotate: 45,
         opacity: 0,
-        transition: { type: "spring", stiffness: 200, damping: 20 },
+        transition: { type: "spring", velocity: 0, stiffness: 200, damping: 20 },
     },
 };
 const mouthVariants: Variants = {

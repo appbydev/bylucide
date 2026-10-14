@@ -8,6 +8,7 @@ const FAN_VARIANTS: Variants = {
         rotate: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 60,
             damping: 10,
             duration: 0.5,
@@ -18,6 +19,7 @@ const FAN_VARIANTS: Variants = {
         transition: {
             delay: 0.1,
             type: "spring",
+            velocity: 0,
             stiffness: 80,
             damping: 13,
         },

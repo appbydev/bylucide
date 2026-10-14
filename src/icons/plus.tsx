@@ -8,7 +8,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} transition={{ type: "spring", stiffness: 100, damping: 15 }} variants={{
+ return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} transition={{ type: "spring", velocity: 0, stiffness: 100, damping: 15 }} variants={{
         normal: {
             rotate: 0,
         },

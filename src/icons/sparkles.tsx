@@ -34,6 +34,7 @@ const STAR_VARIANTS: Variants = {
         transition: {
             duration: 2,
             type: "spring",
+            velocity: 0,
             stiffness: 70,
             damping: 10,
             mass: 0.4,
@@ -42,7 +43,7 @@ const STAR_VARIANTS: Variants = {
     normal: { opacity: 1, x: 0, y: 0 },
     animate: () => ({
         opacity: [0, 1, 0, 0, 0, 0, 1],
-        transition: { duration: 2, type: "spring", stiffness: 70, damping: 10, mass: 0.4 },
+        transition: { duration: 2, type: "spring", velocity: 0, stiffness: 70, damping: 10, mass: 0.4 },
     }),
 };
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {

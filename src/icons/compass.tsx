@@ -12,6 +12,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
           <circle cx="12" cy="12" r="10"/>
           <motion.polygon animate={controls} points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" transition={{
         type: "spring",
+        velocity: 0,
         stiffness: 120,
         damping: 15,
     }} variants={{

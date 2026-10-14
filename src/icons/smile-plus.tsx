@@ -10,7 +10,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
     normal: { scale: 1 },
     animate: {
         scale: 1.1,
-        transition: { type: "spring", stiffness: 200, damping: 20 },
+        transition: { type: "spring", velocity: 0, stiffness: 200, damping: 20 },
     },
 };
 const plusVariants: Variants = {
@@ -18,7 +18,7 @@ const plusVariants: Variants = {
     animate: {
         rotate: 90,
         scale: 1.2,
-        transition: { type: "spring", stiffness: 200, damping: 20, delay: 0.1 },
+        transition: { type: "spring", velocity: 0, stiffness: 200, damping: 20, delay: 0.1 },
     },
 };
  useControlsDriver(register, controls);

@@ -8,7 +8,7 @@ const COG_VARIANTS: Variants = {
     animate: { rotate: 180 },
 };
 const COG_TRANSITION = {
-    transition: { type: "spring", stiffness: 50, damping: 10 },
+    transition: { type: "spring", velocity: 0, stiffness: 50, damping: 10 },
 };
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();

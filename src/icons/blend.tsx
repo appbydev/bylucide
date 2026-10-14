@@ -13,7 +13,7 @@ const animations = {
             animate: {
                 x: 6,
                 y: 6,
-                transition: { type: 'spring', stiffness: 100, damping: 12 },
+                transition: { type: 'spring', velocity: 0, stiffness: 100, damping: 12 },
             },
         },
         circle2: {
@@ -24,7 +24,7 @@ const animations = {
             animate: {
                 x: -6,
                 y: -6,
-                transition: { type: 'spring', stiffness: 100, damping: 12 },
+                transition: { type: 'spring', velocity: 0, stiffness: 100, damping: 12 },
             },
         },
     } satisfies Record<string, Variants>,

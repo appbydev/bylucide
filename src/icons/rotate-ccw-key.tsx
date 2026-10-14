@@ -8,11 +8,11 @@ const animations = {
         group: {
             initial: {
                 rotate: 0,
-                transition: { type: 'spring', stiffness: 150, damping: 25 },
+                transition: { type: 'spring', velocity: 0, stiffness: 150, damping: 25 },
             },
             animate: {
                 rotate: -45,
-                transition: { type: 'spring', stiffness: 150, damping: 25 },
+                transition: { type: 'spring', velocity: 0, stiffness: 150, damping: 25 },
             },
         },
         arrowArc: {},
@@ -25,11 +25,11 @@ const animations = {
         group: {
             initial: {
                 rotate: 0,
-                transition: { type: 'spring', stiffness: 150, damping: 25 },
+                transition: { type: 'spring', velocity: 0, stiffness: 150, damping: 25 },
             },
             animate: {
                 rotate: -360,
-                transition: { type: 'spring', stiffness: 150, damping: 25 },
+                transition: { type: 'spring', velocity: 0, stiffness: 150, damping: 25 },
             },
         },
         arrowArc: {},

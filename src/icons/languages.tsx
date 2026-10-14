@@ -13,6 +13,7 @@ const PATH_VARIANTS: Variants = {
             opacity: { duration: 0.01, delay: custom * 0.1 },
             pathLength: {
                 type: "spring",
+                velocity: 0,
                 duration: 0.5,
                 bounce: 0,
                 delay: custom * 0.1,

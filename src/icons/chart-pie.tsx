@@ -14,6 +14,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z" transition={{
         type: "spring",
+        velocity: 0,
         stiffness: 250,
         damping: 15,
         bounce: 0.6,

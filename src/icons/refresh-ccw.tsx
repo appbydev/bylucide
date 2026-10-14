@@ -9,7 +9,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  
  useControlsDriver(register, controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-          <motion.g animate={controls} transition={{ type: "spring", stiffness: 250, damping: 25 }} variants={{
+          <motion.g animate={controls} transition={{ type: "spring", velocity: 0, stiffness: 250, damping: 25 }} variants={{
         normal: { rotate: "0deg" },
         animate: { rotate: "-50deg" },
     }}>

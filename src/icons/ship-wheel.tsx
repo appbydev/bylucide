@@ -6,11 +6,11 @@ import { useControlsDriver } from '../icon-runtime';
 const SHIP_WHEEL_VARIANTS: Variants = {
     normal: {
         rotate: 0,
-        transition: { type: "spring", stiffness: 50, damping: 10 },
+        transition: { type: "spring", velocity: 0, stiffness: 50, damping: 10 },
     },
     animate: {
         rotate: 180,
-        transition: { type: "spring", stiffness: 50, damping: 10 },
+        transition: { type: "spring", velocity: 0, stiffness: 50, damping: 10 },
     },
 };
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {

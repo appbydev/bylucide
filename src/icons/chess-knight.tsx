@@ -9,6 +9,7 @@ const KNIGHT_VARIANTS: Variants = {
         y: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 220,
             damping: 12,
         },

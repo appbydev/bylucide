@@ -15,7 +15,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
           <path d="M2 7.82a15 15 0 0 1 20 0"/>
           <path d="M5 11.858a10 10 0 0 1 11.5-1.785"/>
           <path d="M8.5 15.429a5 5 0 0 1 2.413-1.31"/>
-          <motion.g animate={controls} transition={{ type: "spring", stiffness: 50, damping: 10 }} variants={COG_VARIANTS}>
+          <motion.g animate={controls} transition={{ type: "spring", velocity: 0, stiffness: 50, damping: 10 }} variants={COG_VARIANTS}>
             <path d="m14.305 19.53.923-.382"/>
             <path d="m15.228 16.852-.923-.383"/>
             <path d="m16.852 15.228-.383-.923"/>

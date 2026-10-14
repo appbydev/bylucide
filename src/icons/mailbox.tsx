@@ -8,6 +8,7 @@ const FLAG_VARIANTS: Variants = {
         rotate: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 300,
             damping: 18,
         },
@@ -16,6 +17,7 @@ const FLAG_VARIANTS: Variants = {
         rotate: -90,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 280,
             damping: 12,
             mass: 1,

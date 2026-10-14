@@ -9,6 +9,7 @@ const RECT_VARIANTS: Variants = {
         transition: {
             duration: 0.2,
             type: "spring",
+            velocity: 0,
             stiffness: 200,
             damping: 25,
         },
@@ -18,6 +19,7 @@ const RECT_VARIANTS: Variants = {
         transition: {
             duration: 0.2,
             type: "spring",
+            velocity: 0,
             stiffness: 200,
             damping: 25,
         },

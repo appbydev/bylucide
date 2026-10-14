@@ -10,6 +10,7 @@ const PATH_VARIANT: Variants = {
         transformOrigin: "left center",
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 80,
             damping: 12,
         },

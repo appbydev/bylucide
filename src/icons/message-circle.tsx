@@ -18,6 +18,7 @@ const ICON_VARIANTS: Variants = {
             },
             scale: {
                 type: "spring",
+                velocity: 0,
                 stiffness: 400,
                 damping: 10,
             },

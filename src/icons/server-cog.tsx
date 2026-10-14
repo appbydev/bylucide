@@ -12,7 +12,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  
  useControlsDriver(register, controls);
  return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-          <motion.g animate={controls} transition={{ type: "spring", stiffness: 50, damping: 10 }} variants={COG_VARIANTS}>
+          <motion.g animate={controls} transition={{ type: "spring", velocity: 0, stiffness: 50, damping: 10 }} variants={COG_VARIANTS}>
             <path d="m10.852 14.772-.383.923"/>
             <path d="M13.148 14.772a3 3 0 1 0-2.296-5.544l-.383-.923"/>
             <path d="m13.148 9.228.383-.923"/>

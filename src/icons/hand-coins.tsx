@@ -10,6 +10,7 @@ const CIRCLE_VARIANTS: Variants = {
         transition: {
             opacity: { duration: 0.2 },
             type: "spring",
+            velocity: 0,
             stiffness: 150,
             damping: 15,
             bounce: 0.8,
@@ -21,6 +22,7 @@ const CIRCLE_VARIANTS: Variants = {
         transition: {
             opacity: { duration: 0.2 },
             type: "spring",
+            velocity: 0,
             stiffness: 150,
             damping: 15,
             bounce: 0.8,
@@ -35,6 +37,7 @@ const SECOND_CIRCLE_VARIANTS: Variants = {
             opacity: { duration: 0.2 },
             delay: 0.15,
             type: "spring",
+            velocity: 0,
             stiffness: 150,
             damping: 15,
             bounce: 0.8,
@@ -47,6 +50,7 @@ const SECOND_CIRCLE_VARIANTS: Variants = {
             opacity: { duration: 0.2 },
             delay: 0.15,
             type: "spring",
+            velocity: 0,
             stiffness: 150,
             damping: 15,
             bounce: 0.8,

@@ -8,6 +8,7 @@ const CARD_VARIANTS: Variants = {
         x: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 280,
             damping: 18,
         },

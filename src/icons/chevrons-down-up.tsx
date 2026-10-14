@@ -5,6 +5,7 @@ import { useControlsDriver } from '../icon-runtime';
 
 const DEFAULT_TRANSITION: Transition = {
     type: "spring",
+    velocity: 0,
     stiffness: 250,
     damping: 25,
 };

@@ -5,6 +5,7 @@ import { useSequenceDriver } from '../icon-runtime';
 
 const DEFAULT_TRANSITION: Transition = {
     type: "spring",
+    velocity: 0,
     stiffness: 100,
     damping: 14,
     mass: 1,

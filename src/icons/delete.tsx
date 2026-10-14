@@ -9,6 +9,7 @@ const LID_VARIANTS: Variants = {
 };
 const SPRING_TRANSITION: Transition = {
     type: "spring",
+    velocity: 0,
     stiffness: 500,
     damping: 30,
 };

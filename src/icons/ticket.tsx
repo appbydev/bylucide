@@ -5,6 +5,7 @@ import { useControlsDriver } from '../icon-runtime';
 
 const TRANSITION: Transition = {
     type: "spring",
+    velocity: 0,
     stiffness: 300,
     damping: 20,
 };

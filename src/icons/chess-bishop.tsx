@@ -9,7 +9,7 @@ const BISHOP_VARIANTS: Variants = {
         y: 0,
         rotate: 0,
         opacity: 1,
-        transition: { type: "spring", stiffness: 220, damping: 18 },
+        transition: { type: "spring", velocity: 0, stiffness: 220, damping: 18 },
     },
     animate: {
         x: [0, -6, -6, -6, 6, 6, 6, 0],

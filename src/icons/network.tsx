@@ -42,7 +42,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  
  useControlsDriver(register, controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-          <motion.path animate={controls} d="M19 5l3 -3" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={{
+          <motion.path animate={controls} d="M19 5l3 -3" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={{
         normal: {
             d: "M19 5l3 -3",
         },
@@ -50,7 +50,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             d: "M17 7l5 -5",
         },
     }}/>
-          <motion.path animate={controls} d="m2 22 3-3" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={{
+          <motion.path animate={controls} d="m2 22 3-3" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={{
         normal: {
             d: "m2 22 3-3",
         },
@@ -58,9 +58,9 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             d: "m2 22 6-6",
         },
     }}/>
-          <motion.path animate={controls} d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={SOCKET_VARIANTS}/>
-          <motion.path animate={controls} custom={{ x: 7.5, y: 13.5 }} initial="normal" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
-          <motion.path animate={controls} custom={{ x: 10.5, y: 16.5 }} initial="normal" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
-          <motion.path animate={controls} d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z" transition={{ type: "spring", stiffness: 500, damping: 30 }} variants={PLUG_VARIANTS}/>
+          <motion.path animate={controls} d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={SOCKET_VARIANTS}/>
+          <motion.path animate={controls} custom={{ x: 7.5, y: 13.5 }} initial="normal" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
+          <motion.path animate={controls} custom={{ x: 10.5, y: 16.5 }} initial="normal" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
+          <motion.path animate={controls} d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PLUG_VARIANTS}/>
         </svg>);
 }

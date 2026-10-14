@@ -48,6 +48,7 @@ const DOT_VARIANTS: Variants = {
             damping: 10,
             stiffness: 300,
             type: "spring",
+            velocity: 0,
         },
     },
 };

@@ -9,6 +9,7 @@ const KING_VARIANTS: Variants = {
         y: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 160,
             damping: 14,
         },

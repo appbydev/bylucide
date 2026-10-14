@@ -36,6 +36,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
                 scale: {
                     duration: 0.3,
                     type: "spring",
+                    velocity: 0,
                     bounce: 0.4,
                     stiffness: 150,
                     damping: 10,

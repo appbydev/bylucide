@@ -13,6 +13,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             rotate: 0,
             transition: {
                 type: "spring",
+                velocity: 0,
                 stiffness: 120,
                 damping: 14,
                 duration: 0.8,

@@ -8,6 +8,7 @@ const PATH_VARIANTS: Variants = {
         translateX: 0,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 200,
             damping: 13,
         },
@@ -17,6 +18,7 @@ const PATH_VARIANTS: Variants = {
         transition: {
             delay: 0.1,
             type: "spring",
+            velocity: 0,
             stiffness: 200,
             damping: 13,
         },

@@ -32,6 +32,7 @@ const PATH_VARIANTS: Variants = {
         opacity: 1,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 300,
             damping: 20,
             delay: i * 0.1,

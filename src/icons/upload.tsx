@@ -9,6 +9,7 @@ const ARROW_VARIANTS: Variants = {
         y: -2,
         transition: {
             type: "spring",
+            velocity: 0,
             stiffness: 200,
             damping: 10,
             mass: 1,

@@ -16,6 +16,7 @@ const G_VARIANTS: Variants = {
 };
 const DEFAULT_TRANSITION: Transition = {
     type: "spring",
+    velocity: 0,
     stiffness: 50,
     damping: 10,
 };
