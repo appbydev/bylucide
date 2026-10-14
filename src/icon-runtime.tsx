@@ -99,6 +99,8 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);
+  const [visible, setVisible] = React.useState(true);
+  const elementRef = React.useRef<HTMLSpanElement | null>(null);
   const [driver, setDriver] = React.useState<IconDriver | null>(null);
   const presentDriver = React.useRef<IconDriver | null>(null);
   const registerDriver = React.useCallback((next: IconDriver | null) => {
@@ -108,7 +110,14 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
   const controller = React.useRef<AbortController | null>(null);
   const label = rest['aria-label'] || rest['aria-labelledby'];
   React.useEffect(() => {
-    if (!driver || reduced || loop === false || (loop === 'hover' && !hovered)) {
+    const element = elementRef.current;
+    if (!element || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  React.useEffect(() => {
+    if (!driver || !visible || reduced || loop === false || (loop === 'hover' && !hovered)) {
       controller.current?.abort();
       controller.current = null;
       if (driver && presentDriver.current === driver && !reduced && (loop === false || (loop === 'hover' && !hovered))) driver.reset();
@@ -131,8 +140,9 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     };
     void run();
     return () => { token.abort(); if (controller.current === token) controller.current = null; if (presentDriver.current === driver) driver.reset(); };
-  }, [driver, reduced, loop, hovered]);
+  }, [driver, visible, reduced, loop, hovered]);
   const display = reduced && staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : Svg ? <Svg size={size} color={color} strokeWidth={strokeWidth} reduced={reduced} register={registerDriver} /> : staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : null;
   if (!display) return null;
-  return <span {...rest} ref={ref} data-icon={name} aria-hidden={rest['aria-hidden'] ?? (label ? undefined : true)} role={rest.role ?? (label ? 'img' : undefined)} style={{ display: 'inline-flex', verticalAlign: 'middle', ...style, color }} onMouseEnter={event => { setHovered(true); onMouseEnter?.(event); }} onMouseLeave={event => { setHovered(false); onMouseLeave?.(event); }}>{display}</span>;
+  const sizedDisplay = React.cloneElement(display, { style: { width: '100%', height: '100%', ...display.props.style } });
+  return <span {...rest} ref={node => { elementRef.current = node; if (typeof ref === 'function') ref(node); else if (ref) ref.current = node; }} data-icon={name} aria-hidden={rest['aria-hidden'] ?? (label ? undefined : true)} role={rest.role ?? (label ? 'img' : undefined)} style={{ display: 'inline-flex', verticalAlign: 'middle', ...style, color }} onMouseEnter={event => { setHovered(true); onMouseEnter?.(event); }} onMouseLeave={event => { setHovered(false); onMouseLeave?.(event); }}>{sizedDisplay}</span>;
 });

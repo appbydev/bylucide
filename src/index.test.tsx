@@ -11,7 +11,8 @@ import { createVolumeController } from './volume-cycle';
 
 beforeAll(() => {
   const window = new Window({ url: 'http://localhost' });
-  Object.assign(globalThis, { window, document: window.document, navigator: window.navigator, HTMLElement: window.HTMLElement, SVGElement: window.SVGElement, Element: window.Element, getComputedStyle: window.getComputedStyle.bind(window), MutationObserver: window.MutationObserver, IntersectionObserver: window.IntersectionObserver });
+  Object.assign(globalThis, { window, document: window.document, navigator: window.navigator, HTMLElement: window.HTMLElement, SVGElement: window.SVGElement, Element: window.Element, getComputedStyle: window.getComputedStyle.bind(window), MutationObserver: window.MutationObserver });
+  Reflect.deleteProperty(globalThis, 'IntersectionObserver');
   Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }) });
   Object.assign(globalThis, { matchMedia: window.matchMedia.bind(window), requestAnimationFrame: (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 16), cancelAnimationFrame: clearTimeout });
 });
