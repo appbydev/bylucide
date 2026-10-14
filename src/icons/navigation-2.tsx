@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,6 +17,6 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><polygon points="12 2 19 21 12 17 5 21 12 2" className="al-primary al-anim-rocket-lift al-delay-0" style={{}} />
-      </svg>);
+      ><motion.polygon points="12 2 19 21 12 17 5 21 12 2" initial="normal" animate={controls} {...simpleMotion('rocket-lift', 0)} />
+      </motion.svg>);
 }

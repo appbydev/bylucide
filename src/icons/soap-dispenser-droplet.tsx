@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,9 +17,9 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M10.5 2v4" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="M14 2H7a2 2 0 0 0-2 2" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <path d="M19.29 14.76A6.67 6.67 0 0 1 17 11a6.6 6.6 0 0 1-2.29 3.76c-1.15.92-1.71 2.04-1.71 3.19 0 2.22 1.8 4.05 4 4.05s4-1.83 4-4.05c0-1.16-.57-2.26-1.71-3.19" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-        <path d="M9.607 21H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h7V7a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" className="al-secondary al-anim-scale-pop al-delay-3" style={{}} />
-      </svg>);
+      ><motion.path d="M10.5 2v4" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="M14 2H7a2 2 0 0 0-2 2" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.path d="M19.29 14.76A6.67 6.67 0 0 1 17 11a6.6 6.6 0 0 1-2.29 3.76c-1.15.92-1.71 2.04-1.71 3.19 0 2.22 1.8 4.05 4 4.05s4-1.83 4-4.05c0-1.16-.57-2.26-1.71-3.19" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+        <motion.path d="M9.607 21H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h7V7a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" initial="normal" animate={controls} {...simpleMotion('scale-pop', 3)} />
+      </motion.svg>);
 }

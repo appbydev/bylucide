@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,9 +17,9 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M10 2h4" className="al-primary al-anim-fill al-delay-0" style={{}} />
-        <path d="M12 14v-4" className="al-secondary al-anim-fade al-delay-1" style={{}} />
-        <path d="M4 13a8 8 0 0 1 8-7 8 8 0 1 1-5.3 14L4 17.6" className="al-secondary al-anim-fade al-delay-2" style={{}} />
-        <path d="M9 17H4v5" className="al-secondary al-anim-fade al-delay-3" style={{}} />
-      </svg>);
+      ><motion.path d="M10 2h4" initial="normal" animate={controls} {...simpleMotion('fill', 0)} />
+        <motion.path d="M12 14v-4" initial="normal" animate={controls} {...simpleMotion('fade', 1)} />
+        <motion.path d="M4 13a8 8 0 0 1 8-7 8 8 0 1 1-5.3 14L4 17.6" initial="normal" animate={controls} {...simpleMotion('fade', 2)} />
+        <motion.path d="M9 17H4v5" initial="normal" animate={controls} {...simpleMotion('fade', 3)} />
+      </motion.svg>);
 }

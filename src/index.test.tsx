@@ -6,8 +6,10 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Icon, ArrowDownIcon, normalizeName, manifest } from './index';
 import { iconRegistry } from './icon-registry';
-import { useCssHoverDriver, type IconDriver, type IconSvgProps } from './icon-runtime';
+import { useControlsDriver, useSequenceDriver, type IconDriver, type IconSvgProps } from './icon-runtime';
 import { createVolumeController } from './volume-cycle';
+import { motion, type LegacyAnimationControls } from 'motion/react';
+import { simpleMotion } from './simple-motion';
 
 beforeAll(() => {
   const window = new Window({ url: 'http://localhost' });
@@ -35,22 +37,22 @@ describe('arquitetura e catálogo unificado', () => {
     expect(normalizeName('axis-3d')).toBe('axis-3d');
     expect(typeof ArrowDownIcon).toBe('object');
   });
-  test('categoriza animações complexas e simples sem manifests auxiliares', () => {
+  test('todos os ícones usam Motion, com cobertura completa nas categorias simples e complexas', () => {
     const complex = manifest.categories.complex;
     const simple = manifest.categories.simple;
     expect(complex.length).toBe(590);
     expect(simple.length).toBe(1108);
     expect(manifest.icons).toEqual([...complex, ...simple].sort());
     expect(new Set([...complex, ...simple]).size).toBe(manifest.icons.length);
-    for (const name of complex) {
-      const source = readFileSync(`src/icons/${name}.tsx`, 'utf8');
+    for (const name of manifest.icons) {
+      const source = readFileSync(name === 'volume' ? 'src/volume-cycle.tsx' : `src/icons/${name}.tsx`, 'utf8');
       expect(source, name).not.toContain('useCssHoverDriver');
+      expect(source, name).toMatch(/from ['"]motion\/react['"]/);
+      expect(source, name).toMatch(/<motion\./);
+      expect(source, name).toMatch(/animate=\{/);
+      expect(source, name).toMatch(/useControlsDriver|useSequenceDriver|register/);
     }
-    for (const name of simple) {
-      const source = readFileSync(`src/icons/${name}.tsx`, 'utf8');
-      expect(source, name).not.toContain('motion/react');
-      expect(source, name).toContain('useCssHoverDriver');
-    }
+    expect(readdirSync('src')).not.toContain('icon-animations.css');
   });
   test('transições spring de ícones zeram velocidade inicial para evitar overshoot após reset', () => {
     // Motion seeds spring velocity from MotionValue.getVelocity(); reset() writes rest values
@@ -242,32 +244,123 @@ describe('lifecycle único', () => {
 });
 
 
-test('actual CSS driver completes, restarts, resets, aborts and unregisters', async () => {
+test('Motion driver completes, restarts, resets, aborts and unregisters', async () => {
   let driver: IconDriver | null = null;
   const register = (next: IconDriver | null) => { driver = next; };
   function Probe() {
-    const ref = useCssHoverDriver(register);
-    return <svg ref={ref}><path className="al-anim-fill" style={{ transition: 'fill-opacity 500ms' }} /></svg>;
+    const controls = { start: async () => {}, stop: () => {}, set: () => {} } as never;
+    useControlsDriver(register, controls);
+    return <svg />;
   }
   const view = render(<Probe />);
-  const svg = view.container.querySelector('svg')!;
-  const path = svg.querySelector('path')!;
   const active = driver!;
   const token = new AbortController();
   const first = active.play(token.signal);
-  expect(svg.classList.contains('bylucide-animate')).toBe(true);
   await first;
-  expect(svg.classList.contains('bylucide-animate')).toBe(false);
   const second = active.play(token.signal);
-  expect(svg.classList.contains('bylucide-animate')).toBe(true);
   active.reset();
-  expect(svg.classList.contains('bylucide-animate')).toBe(false);
-  expect(path.style.transition).toBe('fill-opacity 500ms');
   token.abort();
   await second;
   await active.play(token.signal);
-  expect(svg.classList.contains('bylucide-animate')).toBe(false);
   expect(document.querySelectorAll('#bylucide-color-icon-styles').length).toBe(0);
   view.unmount();
   expect(driver).toBeNull();
 }, 3000);
+
+
+describe('simple motion regressions', () => {
+  test('SVG renderer preserves view-box pivots rather than replacing transformOrigin', () => {
+    const origins: [Parameters<typeof simpleMotion>[0], string][] = [
+      ['bar', '12px 24px'], ['scale-pop', '12px 12px'], ['gear', '12px 12px'],
+      ['bell-ring', '12px 3px'], ['heart-beat', '12px 13px'],
+      ['page-turn', '0px 12px'], ['menu-line', '0px 12px'], ['mail-flap', '12px 0px'],
+      ['fade', '0px 0px'],
+    ];
+    for (const [profile, origin] of origins) {
+      const props = simpleMotion(profile);
+      expect(props.style).not.toHaveProperty('transformOrigin');
+      const markup = renderToStaticMarkup(<svg viewBox="0 0 24 24"><motion.path initial="normal" {...props} d="M2 3h4v5" /></svg>);
+      expect(markup).toContain(`transform-origin:${origin}`);
+      expect(markup).toContain('transform-box:view-box');
+    }
+  });
+
+  test('profile options, keyframes, stagger and explicit delays survive migration', () => {
+    expect(simpleMotion('gear', 3, { rotation: 45 }).variants.animate).toMatchObject({
+      transform: 'rotate(45deg)', transition: { type: 'tween', duration: 0.7, delay: 0.24 },
+    });
+    expect(simpleMotion('nudge', 0, { tx: -2, ty: 3 }).variants.animate).toMatchObject({ transform: 'translate(-2px, 3px)' });
+    expect(simpleMotion('menu-line', 0, { scaleX: 0.4 }).variants.animate).toMatchObject({ transform: 'scaleX(0.4)' });
+    expect(simpleMotion('draw', 2, { dashLength: 83 }).variants.animate).toMatchObject({ strokeDashoffset: [83, 0], transition: { delay: 0.16 } });
+    expect(simpleMotion('draw-line').variants.animate).toMatchObject({ strokeDashoffset: [20, 0] });
+    expect(simpleMotion('dot-appear', 9).variants.animate).toMatchObject({ transition: { delay: 0.2, times: [0, 0.4, 0.7, 1] } });
+    expect(simpleMotion('bell-ring', 9).variants.animate).toMatchObject({ transition: { delay: 0 }, transform: ['rotate(0deg)', 'rotate(14deg)', 'rotate(-12deg)', 'rotate(8deg)', 'rotate(-5deg)', 'rotate(2deg)', 'rotate(0deg)'] });
+    expect(simpleMotion('fill').style.fill).toBe('none');
+  });
+
+  test('every simple animated child subscribes directly, without a duplicate SVG subscriber', () => {
+    let count = 0;
+    for (const file of readdirSync('src/icons').filter(file => file.endsWith('.tsx'))) {
+      const source = readFileSync(`src/icons/${file}`, 'utf8');
+      if (!source.includes("import { simpleMotion }")) continue;
+      count++;
+      expect(source.match(/<motion\.svg[^>]*>/)?.[0]).not.toContain('animate={controls}');
+      const children = source.match(/<motion\.(?!svg\b)[\s\S]*?\/>/g) ?? [];
+      expect(children.length).toBeGreaterThan(0);
+      for (const child of children) {
+        expect(child).toContain('animate={controls}');
+        expect(child).toContain('initial="normal"');
+      }
+    }
+    expect(count).toBe(1108);
+  });
+
+  test('abort settles an unfinished phase, skips return phase, and allows replay/reset', async () => {
+    let driver: IconDriver | null = null;
+    const phases: string[] = [];
+    let stops = 0;
+    const sets: string[] = [];
+    let finish: () => void = () => {};
+    const controls = {
+      start(phase: string) {
+        phases.push(phase);
+        return new Promise<void>(resolve => { finish = resolve; });
+      },
+      stop() { stops++; },
+      set(phase: string) { sets.push(phase); },
+    } as unknown as LegacyAnimationControls;
+    const register = (next: IconDriver | null) => { driver = next; };
+    function Probe() { useSequenceDriver(register, ['animate', 'normal'], 'normal', controls); return null; }
+    const view = render(<Probe />);
+    const active = driver!;
+    const aborted = new AbortController();
+    const first = active.play(aborted.signal);
+    const finishFirst = finish;
+    aborted.abort();
+    await first;
+    expect(stops).toBe(1);
+    expect(phases).toEqual(['animate']);
+    finishFirst();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(phases).toEqual(['animate']);
+    active.reset();
+    expect(sets).toEqual(['normal']);
+    const replayToken = new AbortController();
+    const replay = active.play(replayToken.signal);
+    expect(phases).toEqual(['animate', 'animate']);
+    finish();
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(phases).toEqual(['animate', 'animate', 'normal']);
+    finish();
+    await replay;
+    const stopped = stops;
+    replayToken.abort();
+    expect(stops).toBe(stopped);
+    await active.play(aborted.signal);
+    expect(phases).toHaveLength(3);
+    view.unmount();
+    expect(stops).toBe(stopped + 1);
+    expect(driver).toBeNull();
+  }, 3000);
+});

@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,12 +17,12 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="m15 11-1 9" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="m19 11-4-7" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <path d="M2 11h20" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-        <path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4" className="al-secondary al-anim-scale-pop al-delay-3" style={{}} />
-        <path d="M4.5 15.5h15" className="al-secondary al-anim-scale-pop al-delay-4" style={{}} />
-        <path d="m5 11 4-7" className="al-secondary al-anim-scale-pop al-delay-5" style={{}} />
-        <path d="m9 11 1 9" className="al-secondary al-anim-scale-pop al-delay-6" style={{}} />
-      </svg>);
+      ><motion.path d="m15 11-1 9" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="m19 11-4-7" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.path d="M2 11h20" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+        <motion.path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4" initial="normal" animate={controls} {...simpleMotion('scale-pop', 3)} />
+        <motion.path d="M4.5 15.5h15" initial="normal" animate={controls} {...simpleMotion('scale-pop', 4)} />
+        <motion.path d="m5 11 4-7" initial="normal" animate={controls} {...simpleMotion('scale-pop', 5)} />
+        <motion.path d="m9 11 1 9" initial="normal" animate={controls} {...simpleMotion('scale-pop', 6)} />
+      </motion.svg>);
 }

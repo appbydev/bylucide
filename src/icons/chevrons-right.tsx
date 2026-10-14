@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,7 +17,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="m6 17 5-5-5-5" className="al-primary al-anim-nudge al-delay-0" style={{ '--al-tx': '1px', '--al-ty': '0px' }} />
-        <path d="m13 17 5-5-5-5" className="al-secondary al-anim-nudge al-delay-1" style={{ '--al-tx': '2px', '--al-ty': '0px' }} />
-      </svg>);
+      ><motion.path d="m6 17 5-5-5-5" initial="normal" animate={controls} {...simpleMotion('nudge', 0, { tx: 1, ty: 0 })} />
+        <motion.path d="m13 17 5-5-5-5" initial="normal" animate={controls} {...simpleMotion('nudge', 1, { tx: 2, ty: 0 })} />
+      </motion.svg>);
 }

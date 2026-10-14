@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,13 +17,13 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M12 9v1.258" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="M16 3v5.46" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <path d="M21 9.118V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5.75" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-        <path d="M22 17.5c0 2.499-1.75 3.749-3.83 4.474a.5.5 0 0 1-.335-.005c-2.085-.72-3.835-1.97-3.835-4.47V14a.5.5 0 0 1 .5-.499c1 0 2.25-.6 3.12-1.36a.6.6 0 0 1 .76-.001c.875.765 2.12 1.36 3.12 1.36a.5.5 0 0 1 .5.5z" className="al-secondary al-anim-scale-pop al-delay-3" style={{}} />
-        <path d="M3 15h7" className="al-secondary al-anim-scale-pop al-delay-4" style={{}} />
-        <path d="M3 9h12.142" className="al-secondary al-anim-scale-pop al-delay-5" style={{}} />
-        <path d="M8 15v6" className="al-secondary al-anim-scale-pop al-delay-6" style={{}} />
-        <path d="M8 3v6" className="al-secondary al-anim-scale-pop al-delay-7" style={{}} />
-      </svg>);
+      ><motion.path d="M12 9v1.258" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="M16 3v5.46" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.path d="M21 9.118V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5.75" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+        <motion.path d="M22 17.5c0 2.499-1.75 3.749-3.83 4.474a.5.5 0 0 1-.335-.005c-2.085-.72-3.835-1.97-3.835-4.47V14a.5.5 0 0 1 .5-.499c1 0 2.25-.6 3.12-1.36a.6.6 0 0 1 .76-.001c.875.765 2.12 1.36 3.12 1.36a.5.5 0 0 1 .5.5z" initial="normal" animate={controls} {...simpleMotion('scale-pop', 3)} />
+        <motion.path d="M3 15h7" initial="normal" animate={controls} {...simpleMotion('scale-pop', 4)} />
+        <motion.path d="M3 9h12.142" initial="normal" animate={controls} {...simpleMotion('scale-pop', 5)} />
+        <motion.path d="M8 15v6" initial="normal" animate={controls} {...simpleMotion('scale-pop', 6)} />
+        <motion.path d="M8 3v6" initial="normal" animate={controls} {...simpleMotion('scale-pop', 7)} />
+      </motion.svg>);
 }

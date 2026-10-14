@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,10 +17,10 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M16 2v2" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="M17.915 22a6 6 0 0 0-12 0" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <path d="M8 2v2" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-        <circle cx="12" cy="12" r="4" className="al-secondary al-anim-scale-pop al-delay-3" style={{}} />
-        <rect x="3" y="4" width="18" height="18" rx="2" className="al-secondary al-anim-scale-pop al-delay-4" style={{}} />
-      </svg>);
+      ><motion.path d="M16 2v2" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="M17.915 22a6 6 0 0 0-12 0" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.path d="M8 2v2" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+        <motion.circle cx="12" cy="12" r="4" initial="normal" animate={controls} {...simpleMotion('scale-pop', 3)} />
+        <motion.rect x="3" y="4" width="18" height="18" rx="2" initial="normal" animate={controls} {...simpleMotion('scale-pop', 4)} />
+      </motion.svg>);
 }

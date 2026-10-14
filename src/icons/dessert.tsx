@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,8 +17,8 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M10.162 3.167A10 10 0 0 0 2 13a2 2 0 0 0 4 0v-1a2 2 0 0 1 4 0v4a2 2 0 0 0 4 0v-4a2 2 0 0 1 4 0v1a2 2 0 0 0 4-.006 10 10 0 0 0-8.161-9.826" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="M20.804 14.869a9 9 0 0 1-17.608 0" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <circle cx="12" cy="4" r="2" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-      </svg>);
+      ><motion.path d="M10.162 3.167A10 10 0 0 0 2 13a2 2 0 0 0 4 0v-1a2 2 0 0 1 4 0v4a2 2 0 0 0 4 0v-4a2 2 0 0 1 4 0v1a2 2 0 0 0 4-.006 10 10 0 0 0-8.161-9.826" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="M20.804 14.869a9 9 0 0 1-17.608 0" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.circle cx="12" cy="4" r="2" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+      </motion.svg>);
 }

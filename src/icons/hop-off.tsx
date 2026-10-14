@@ -1,10 +1,13 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
-import { useCssHoverDriver } from '../icon-runtime';
+import { motion, useAnimation } from 'motion/react';
+import { useControlsDriver } from '../icon-runtime';
+import { simpleMotion } from '../simple-motion';
 
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
-  const ref = useCssHoverDriver(register);
-  return (<svg ref={ref} style={{ color }}
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return (<motion.svg style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -14,14 +17,14 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-      ><path d="M10.82 16.12c1.69.6 3.91.79 5.18.85.28.01.53-.09.7-.27" className="al-primary al-anim-scale-pop al-delay-0" style={{}} />
-        <path d="M11.14 20.57c.52.24 2.44 1.12 4.08 1.37.46.06.86-.25.9-.71.12-1.52-.3-3.43-.5-4.28" className="al-secondary al-anim-scale-pop al-delay-1" style={{}} />
-        <path d="M16.13 21.05c1.65.63 3.68.84 4.87.91a.9.9 0 0 0 .7-.26" className="al-secondary al-anim-scale-pop al-delay-2" style={{}} />
-        <path d="M17.99 5.52a20.83 20.83 0 0 1 3.15 4.5.8.8 0 0 1-.68 1.13c-1.17.1-2.5.02-3.9-.25" className="al-secondary al-anim-scale-pop al-delay-3" style={{}} />
-        <path d="M20.57 11.14c.24.52 1.12 2.44 1.37 4.08.04.3-.08.59-.31.75" className="al-secondary al-anim-scale-pop al-delay-4" style={{}} />
-        <path d="M4.93 4.93a10 10 0 0 0-.67 13.4c.35.43.96.4 1.17-.12.69-1.71 1.07-5.07 1.07-6.71 1.34.45 3.1.9 4.88.62a.85.85 0 0 0 .48-.24" className="al-secondary al-anim-scale-pop al-delay-5" style={{}} />
-        <path d="M5.52 17.99c1.05.95 2.91 2.42 4.5 3.15a.8.8 0 0 0 1.13-.68c.2-2.34-.33-5.3-1.57-8.28" className="al-secondary al-anim-scale-pop al-delay-6" style={{}} />
-        <path d="M8.35 2.68a10 10 0 0 1 9.98 1.58c.43.35.4.96-.12 1.17-1.5.6-4.3.98-6.07 1.05" className="al-secondary al-anim-scale-pop al-delay-7" style={{}} />
-        <path d="m2 2 20 20" className="al-secondary al-anim-scale-pop al-delay-7" style={{}} />
-      </svg>);
+      ><motion.path d="M10.82 16.12c1.69.6 3.91.79 5.18.85.28.01.53-.09.7-.27" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
+        <motion.path d="M11.14 20.57c.52.24 2.44 1.12 4.08 1.37.46.06.86-.25.9-.71.12-1.52-.3-3.43-.5-4.28" initial="normal" animate={controls} {...simpleMotion('scale-pop', 1)} />
+        <motion.path d="M16.13 21.05c1.65.63 3.68.84 4.87.91a.9.9 0 0 0 .7-.26" initial="normal" animate={controls} {...simpleMotion('scale-pop', 2)} />
+        <motion.path d="M17.99 5.52a20.83 20.83 0 0 1 3.15 4.5.8.8 0 0 1-.68 1.13c-1.17.1-2.5.02-3.9-.25" initial="normal" animate={controls} {...simpleMotion('scale-pop', 3)} />
+        <motion.path d="M20.57 11.14c.24.52 1.12 2.44 1.37 4.08.04.3-.08.59-.31.75" initial="normal" animate={controls} {...simpleMotion('scale-pop', 4)} />
+        <motion.path d="M4.93 4.93a10 10 0 0 0-.67 13.4c.35.43.96.4 1.17-.12.69-1.71 1.07-5.07 1.07-6.71 1.34.45 3.1.9 4.88.62a.85.85 0 0 0 .48-.24" initial="normal" animate={controls} {...simpleMotion('scale-pop', 5)} />
+        <motion.path d="M5.52 17.99c1.05.95 2.91 2.42 4.5 3.15a.8.8 0 0 0 1.13-.68c.2-2.34-.33-5.3-1.57-8.28" initial="normal" animate={controls} {...simpleMotion('scale-pop', 6)} />
+        <motion.path d="M8.35 2.68a10 10 0 0 1 9.98 1.58c.43.35.4.96-.12 1.17-1.5.6-4.3.98-6.07 1.05" initial="normal" animate={controls} {...simpleMotion('scale-pop', 7)} />
+        <motion.path d="m2 2 20 20" initial="normal" animate={controls} {...simpleMotion('scale-pop', 7)} />
+      </motion.svg>);
 }

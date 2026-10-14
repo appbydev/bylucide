@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
 import { lucideSymbols } from './lucide-catalog';
-import { ensureAnimationStyles } from './inject-styles';
+
 import type { LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
 
@@ -15,37 +15,6 @@ export type IconSvg = React.ComponentType<IconSvgProps>;
 
 export function useControlsDriver(register: IconSvgProps['register'], ...controls: LegacyAnimationControls[]) {
   useSequenceDriver(register, ['animate'], 'normal', ...controls);
-}
-
-export function useCssHoverDriver(register: IconSvgProps['register']) {
-  const ref = React.useRef<SVGSVGElement>(null);
-  React.useLayoutEffect(() => {
-    const svg = ref.current;
-    if (!svg) return;
-    const reset = () => {
-      // Transition-only upstream effects must return to rest before the next cycle.
-      // Otherwise a rapid class toggle leaves fill-opacity at its previous target.
-      const fills = Array.from(svg.querySelectorAll<SVGElement>('.al-anim-fill'));
-      const transitions = fills.map(node => node.style.transition);
-      fills.forEach(node => { node.style.transition = 'none'; });
-      svg.classList.remove('bylucide-animate');
-      fills.forEach(node => { void getComputedStyle(node).fillOpacity; });
-      fills.forEach((node, index) => { node.style.transition = transitions[index]!; });
-    };
-    register({ reset, play(signal) {
-      if (signal.aborted) return Promise.resolve();
-      reset();
-      svg.getBoundingClientRect(); // Commit reset before restarting the CSS keyframes.
-      svg.classList.add('bylucide-animate');
-      return new Promise<void>(resolve => {
-        const finish = () => { clearTimeout(timer); signal.removeEventListener('abort', finish); reset(); resolve(); };
-        const timer = setTimeout(finish, 1260); // 700ms longest animation + 560ms maximum stagger.
-        signal.addEventListener('abort', finish, { once: true });
-      });
-    }});
-    return () => { reset(); register(null); };
-  }, [register]);
-  return ref;
 }
 
 // Play upstream's named phases in order, waiting for Motion's actual completion callbacks.
@@ -95,7 +64,6 @@ export function useReduced() { return React.useSyncExternalStore(subscribe, snap
 // Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
 export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
-  React.useLayoutEffect(ensureAnimationStyles, []);
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);
