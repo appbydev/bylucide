@@ -16,7 +16,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  useControlsDriver(register, controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.line animate={controls} transition={DEFAULT_TRANSITION} variants={{
-        animate: { translateY: -4 },
+        animate: { translateY: -2 },
         normal: {
             translateX: 0,
             rotate: 0,
@@ -24,7 +24,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         },
     }} x1={22} x2={2} y1={6} y2={6}/>
           <motion.line animate={controls} transition={DEFAULT_TRANSITION} variants={{
-        animate: { translateY: 4 },
+        animate: { translateY: 2 },
         normal: {
             translateX: 0,
             rotate: 0,
@@ -32,7 +32,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         },
     }} x1={22} x2={2} y1={18} y2={18}/>
           <motion.line animate={controls} transition={DEFAULT_TRANSITION} variants={{
-        animate: { translateX: -4 },
+        animate: { translateX: -2 },
         normal: {
             translateX: 0,
             rotate: 0,
@@ -40,7 +40,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         },
     }} x1={6} x2={6} y1={2} y2={22}/>
           <motion.line animate={controls} transition={DEFAULT_TRANSITION} variants={{
-        animate: { translateX: 4 },
+        animate: { translateX: 2 },
         normal: {
             translateX: 0,
             rotate: 0,
