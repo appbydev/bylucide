@@ -1,4 +1,4 @@
-import css from './icon-animations.css';
+import css from './icon-animations.css?inline';
 
 const STYLE_ID = 'bylucide-animations';
 
