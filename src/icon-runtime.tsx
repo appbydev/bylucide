@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
 import { lucideSymbols } from './lucide-catalog';
-import './icon-animations.css';
+import { ensureAnimationStyles } from './inject-styles';
 import type { LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
 
@@ -95,6 +95,7 @@ export function useReduced() { return React.useSyncExternalStore(subscribe, snap
 // Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
 export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
+  React.useLayoutEffect(ensureAnimationStyles, []);
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);

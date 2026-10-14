@@ -7,4 +7,5 @@ export default defineConfig({
 	outDir: "dist",
 	external: ["react", "react-dom"],
 	noExternal: ["motion", "lucide-react"],
+	loader: { ".css": "text" },
 });
