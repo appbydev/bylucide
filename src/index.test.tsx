@@ -51,6 +51,21 @@ describe('arquitetura e catálogo unificado', () => {
       expect(source, name).toContain('useCssHoverDriver');
     }
   });
+  test('transições spring de ícones zeram velocidade inicial para evitar overshoot após reset', () => {
+    // Motion seeds spring velocity from MotionValue.getVelocity(); reset() writes rest values
+    // in the same tick, producing synthetic velocity (~±190/s) that flings SVG coords past bounds.
+    const springFiles = readdirSync('src/icons').filter(file => file.endsWith('.tsx'));
+    let checked = 0;
+    for (const file of springFiles) {
+      const source = readFileSync(`src/icons/${file}`, 'utf8');
+      const spring = [...source.matchAll(/type: ['"]spring['"][^}]*\}?/g)];
+      for (const match of spring) {
+        checked++;
+        expect(match[0], file).toContain('velocity: 0');
+      }
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
   test('cada ícone renderiza SVG e geometria com props reais, incluindo exceções', () => {
     for (const name of manifest.icons) {
       const html = renderToStaticMarkup(<Icon name={name} size={34} strokeWidth={3} color="purple" loop={false} />);
