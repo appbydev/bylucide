@@ -5,7 +5,7 @@ import { useControlsDriver } from '../icon-runtime';
 
 const VARIANTS: Variants = {
     normal: { translateX: 0, translateY: 0 },
-    animate: { translateX: 0, translateY: 0 },
+    animate: { translateX: 1, translateY: -1 },
 };
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
