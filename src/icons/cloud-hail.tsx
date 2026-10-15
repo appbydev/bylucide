@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import { useSequenceDriver, type IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 const hailAnimation: Variants = {
     initial: { opacity: 1 },
     animate: (i: number = 0) => ({
@@ -31,7 +32,7 @@ const animations = {
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  useSequenceDriver(register, ['animate'], 'initial', controls);
- return (<motion.svg  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" initial="initial" animate={controls} >
+ return (<MotionSvgRoot  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" initial="initial" animate={controls} >
       <motion.path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" variants={(animations.default as Record<string, Variants>).path1} initial="initial" animate={controls}/>
       <motion.g variants={(animations.default as Record<string, Variants>).group} initial="initial" animate={controls}>
         <motion.path d="M8 14v2" variants={(animations.default as Record<string, Variants>).path2} custom={0}/>
@@ -41,5 +42,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         <motion.path d="M16 20h.01" variants={(animations.default as Record<string, Variants>).path6} custom={4}/>
         <motion.path d="M8 20h.01" variants={(animations.default as Record<string, Variants>).path5} custom={5}/>
       </motion.g>
-    </motion.svg>);
+    </MotionSvgRoot>);
 }

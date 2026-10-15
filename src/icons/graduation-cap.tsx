@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CAP_VARIANTS: Variants = {
@@ -31,7 +32,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
         <motion.g animate={controls} style={{ transformOrigin: "12px 12px" }} variants={CAP_VARIANTS}>
           <path d="M2 10l10-5 10 5-10 5z"/>
           <path d="M6 12v5c3 3 9 3 12 0v-5"/>
@@ -41,5 +42,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         transformOrigin: "top center",
     }} variants={TASSEL_VARIANTS}/>
         </motion.g>
-      </svg>);
+      </SvgRoot>);
 }

@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useSequenceDriver } from '../icon-runtime';
 
 
@@ -31,7 +32,7 @@ const mouthVariants: Variants = {
     },
 };
  useSequenceDriver(register, ["hidden","visible"], 'visible', controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={faceVariants} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={faceVariants} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M3 7V5a2 2 0 0 1 2-2h2" initial="visible" variants={cornerVariants}/>
           <motion.path animate={controls} d="M17 3h2a2 2 0 0 1 2 2v2" initial="visible" variants={cornerVariants}/>
           <motion.path animate={controls} d="M21 17v2a2 2 0 0 1-2 2h-2" initial="visible" variants={cornerVariants}/>
@@ -39,5 +40,5 @@ const mouthVariants: Variants = {
           <motion.path animate={controls} d="M8 14s1.5 2 4 2 4-2 4-2" initial="visible" variants={mouthVariants}/>
           <line x1="9" x2="9.01" y1="9" y2="9"/>
           <line x1="15" x2="15.01" y1="9" y2="9"/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

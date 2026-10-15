@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 
@@ -8,7 +9,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={{
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={{
         normal: { rotate: 0, y: 0, scale: 1 },
         animate: {
             rotate: [0, -3, 3, 0, 0],
@@ -82,5 +83,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             },
         },
     }}/>
-      </motion.svg>);
+      </MotionSvgRoot>);
 }

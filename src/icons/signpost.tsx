@@ -1,5 +1,6 @@
 'use client';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { motion, useAnimation } from 'motion/react';
 import { useControlsDriver } from '../icon-runtime';
 import { simpleMotion } from '../simple-motion';
@@ -7,7 +8,7 @@ import { simpleMotion } from '../simple-motion';
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
-  return (<motion.svg style={{ color }}
+  return (<MotionSvgRoot style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -20,5 +21,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
       ><motion.path d="M12 13v8" initial="normal" animate={controls} {...simpleMotion('scale-pop', 0)} />
         <motion.path d="M12 3v3" initial="normal" animate={controls} {...simpleMotion('fade', 1)} />
         <motion.path d="M18 6a2 2 0 0 1 1.387.56l2.307 2.22a1 1 0 0 1 0 1.44l-2.307 2.22A2 2 0 0 1 18 13H6a2 2 0 0 1-1.387-.56l-2.306-2.22a1 1 0 0 1 0-1.44l2.306-2.22A2 2 0 0 1 6 6z" initial="normal" animate={controls} {...simpleMotion('fade', 2)} />
-      </motion.svg>);
+      </MotionSvgRoot>);
 }

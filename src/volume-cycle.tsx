@@ -1,6 +1,6 @@
 'use client';
 import { motion, useAnimation } from 'motion/react';
-import { useControlsDriver } from './icon-runtime';
+import { useControlsDriver, SvgRoot } from './icon-runtime';
 import type { IconSvgProps, IconDriver } from './icon-runtime';
 
 type Phase = 'idle' | 'wave' | 'return';
@@ -39,9 +39,9 @@ export function createVolumeController(advance: (phase: Phase) => void, onCycle:
 export default function VolumeCycle({ size, color, strokeWidth, register }: IconSvgProps) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
-  return <svg style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+  return <SvgRoot style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
     <motion.path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
     {['m22 9-6 6', 'm16 9 6 6'].map(d => <motion.path key={d} d={d} initial="normal" animate={controls} variants={{ normal: { opacity: 1, pathLength: 1 }, animate: { opacity: 0, pathLength: 0, transition: { duration: 0.2 } } }} />)}
     {['M16 9a5 5 0 0 1 0 6', 'M19.364 5.636a9 9 0 0 1 0 12.728'].map((d, index) => <motion.path key={d} d={d} initial="normal" animate={controls} variants={{ normal: { opacity: 0, pathLength: 0 }, animate: { opacity: 1, pathLength: 1, transition: { duration: 0.3, delay: 0.2 + index * 0.2 } } }} />)}
-  </svg>;
+  </SvgRoot>;
 }

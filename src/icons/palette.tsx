@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const DASH_LENGTH = 70;
@@ -56,10 +57,10 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M12 2a1 1 0 0 0 0 20l.25 0a1.75 1.75 0 0 0 1.4-2.8l-.3-.4a1.75 1.75 0 0 1 1.4-2.8h2.25a5 5 0 0 0 5-5 10 9 0 0 0-10-9z" initial="normal" strokeDasharray={DASH_LENGTH} variants={OUTLINE_VARIANTS}/>
           <motion.g animate={controls} initial="normal" variants={DOTS_GROUP_VARIANTS}>
             {DOTS.map((dot) => (<motion.circle cx={dot.cx} cy={dot.cy} fill="currentColor" key={`${dot.cx}-${dot.cy}`} r=".5" style={{ transformBox: "fill-box", transformOrigin: "center" }} variants={DOT_VARIANTS}/>))}
           </motion.g>
-        </svg>);
+        </SvgRoot>);
 }

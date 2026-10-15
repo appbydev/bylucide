@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const ALARM_VARIANTS: Variants = {
@@ -34,7 +35,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M11 21c0-2.5 2-2.5 2-5" initial={{ y: 0, opacity: 1 }} variants={SMOKE_VARIANTS}/>
           <motion.path animate={controls} d="M16 21c0-2.5 2-2.5 2-5" initial={{ y: 0, opacity: 1 }} variants={SMOKE_VARIANTS}/>
           <motion.g animate={controls} initial={{ scale: 1, opacity: 1 }} variants={ALARM_VARIANTS}>
@@ -42,5 +43,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             <motion.path d="M21 3a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1z"/>
           </motion.g>
           <motion.path animate={controls} d="M6 21c0-2.5 2-2.5 2-5" initial={{ y: 0, opacity: 1 }} variants={SMOKE_VARIANTS}/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

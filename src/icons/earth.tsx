@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CIRCLE_TRANSITION: Transition = {
@@ -22,7 +23,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M21.54 15H17a2 2 0 0 0-2 2v4.54" transition={{ duration: 0.7, delay: 0.5, opacity: { delay: 0.5 } }} variants={{
         normal: {
             pathLength: 1,
@@ -60,5 +61,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         },
     }}/>
           <motion.circle animate={controls} cx="12" cy="12" r="10" transition={CIRCLE_TRANSITION} variants={CIRCLE_VARIANTS}/>
-        </svg>);
+        </SvgRoot>);
 }

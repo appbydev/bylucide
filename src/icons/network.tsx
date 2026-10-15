@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const PLUG_VARIANTS: Variants = {
@@ -41,7 +42,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M19 5l3 -3" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={{
         normal: {
             d: "M19 5l3 -3",
@@ -62,5 +63,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
           <motion.path animate={controls} custom={{ x: 7.5, y: 13.5 }} initial="normal" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
           <motion.path animate={controls} custom={{ x: 10.5, y: 16.5 }} initial="normal" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PATH_VARIANTS}/>
           <motion.path animate={controls} d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z" transition={{ type: "spring", velocity: 0, stiffness: 500, damping: 30 }} variants={PLUG_VARIANTS}/>
-        </svg>);
+        </SvgRoot>);
 }

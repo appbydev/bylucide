@@ -1,5 +1,6 @@
 'use client';
 import { useSequenceDriver } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { motion, useAnimation } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 const WIFI_LEVELS = [
@@ -9,7 +10,7 @@ const WIFI_LEVELS = [
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation(), questionControls = useAnimation();
  useSequenceDriver(register, [['fadeOut', 'hide'], ['fadeIn', 'show'], 1.5, ['fadeIn', 'hide']], ['fadeIn', 'hide'], controls, questionControls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           {WIFI_LEVELS.map((level, index) => (<motion.path animate={controls} d={level.d} initial={{ opacity: level.initialOpacity }} key={level.d} variants={{
             fadeOut: {
                 opacity: index === 0 ? 1 : 0,
@@ -46,5 +47,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
     }} x="12" y="8">
             ?
           </motion.text>
-        </svg>);
+        </SvgRoot>);
 }

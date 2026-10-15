@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const VERTICAL_BAR_VARIANTS: Variants = {
@@ -35,10 +36,10 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot  style={{ color }} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
         <path d="M2 21a8 8 0 0 1 13.292-6"/>
         <circle cx="10" cy="8" r="5"/>
         <motion.path animate={controls} d="M19 16v6" initial="normal" variants={VERTICAL_BAR_VARIANTS}/>
         <motion.path animate={controls} d="M22 19h-6" initial="normal" variants={HORIZONTAL_BAR_VARIANTS}/>
-      </motion.svg>);
+      </MotionSvgRoot>);
 }

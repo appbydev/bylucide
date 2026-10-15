@@ -1,6 +1,7 @@
 'use client';
 import { AnimatePresence, motion, useAnimation } from 'motion/react';
 import { useSequenceDriver, type IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 const KEYBOARD_PATHS = [
     { id: "key1", d: "M10 8h.01" },
     { id: "key2", d: "M12 12h.01" },
@@ -14,10 +15,10 @@ const KEYBOARD_PATHS = [
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  useSequenceDriver(register, ['animate'], 'initial', controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <rect height="16" rx="2" width="20" x="2" y="4"/>
           <AnimatePresence>
             {KEYBOARD_PATHS.map((path, index) => (<motion.path animate={controls} custom={index} d={path.d} initial="initial" variants={{ initial: { opacity: 1 }, animate: (i: number) => ({ opacity: [1, 0.2, 1], transition: { duration: 1.5, times: [0, 0.5, 1], delay: i * 0.2 * Math.random(), repeat: 1, repeatType: 'reverse' } }) }} key={path.id}/>))}
           </AnimatePresence>
-        </svg>);
+        </SvgRoot>);
 }

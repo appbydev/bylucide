@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const LIRA_MAIN_VARIANTS: Variants = {
@@ -47,9 +48,9 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M18 12a9 9 0 0 1-9 9V3" initial="normal" variants={LIRA_MAIN_VARIANTS}/>
           <motion.path animate={controls} d="M15 4 5 9" initial="normal" variants={LIRA_SECONDARY_VARIANTS}/>
           <motion.path animate={controls} d="m15 8.5-10 5" initial="normal" variants={LIRA_SECONDARY_VARIANTS}/>
-        </svg>);
+        </SvgRoot>);
 }

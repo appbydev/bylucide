@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const LID_VARIANTS: Variants = {
@@ -17,7 +18,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.g animate={controls} transition={SPRING_TRANSITION} variants={LID_VARIANTS}>
             <path d="M3 6h18"/>
             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
@@ -34,5 +35,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         normal: { y1: 11, y2: 17 },
         animate: { y1: 11.5, y2: 17.5 },
     }} x1="14" x2="14" y1="11" y2="17"/>
-        </svg>);
+        </SvgRoot>);
 }

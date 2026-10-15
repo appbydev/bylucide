@@ -1,6 +1,7 @@
 'use client';
-import { motion, useAnimation, type Variants } from 'motion/react';
+import { useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CIRCLE_GAUGE_VARIANTS: Variants = {
@@ -15,9 +16,9 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={CIRCLE_GAUGE_VARIANTS} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={CIRCLE_GAUGE_VARIANTS} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <path d="M15.6 2.7a10 10 0 1 0 5.7 5.7"/>
           <circle cx="12" cy="12" r="2"/>
           <path d="M13.4 10.6 19 5"/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

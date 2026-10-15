@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const DEFAULT_TRANSITION: Transition = {
@@ -11,10 +12,10 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="m18 15-6-6-6 6" transition={DEFAULT_TRANSITION} variants={{
         normal: { y: 0 },
         animate: { y: [0, -2, 0] },
     }}/>
-        </svg>);
+        </SvgRoot>);
 }

@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const PAPER_PATH: Variants = {
@@ -36,7 +37,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.g animate={controls} initial="normal" variants={PAPER_PATH}>
             <path d="M4 13V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5"/>
             <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
@@ -46,5 +47,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
           <motion.path animate={controls} custom={0.6} d="M18 20v-3" initial="normal" variants={SHRED_PATH_VARIANTS}/>
           <path d="M2 13h20"/>
           <motion.path animate={controls} d="M6 20v-3" initial="normal" variants={SHRED_PATH_VARIANTS}/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

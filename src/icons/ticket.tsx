@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants, type Transition } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const TRANSITION: Transition = {
@@ -23,7 +24,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} className="overflow-visible" fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} className="overflow-visible" fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.g animate={controls} initial="normal" transition={TRANSITION} variants={LEFT_VARIANTS}>
             <path d="M13 5H4a2 2 0 0 0-2 2v2a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h9"/>
             <path d="M13 5v2"/>
@@ -31,5 +32,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             <path d="M13 17v2"/>
           </motion.g>
           <motion.path animate={controls} d="M13 5h7a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2h-7" initial="normal" style={{ transformOrigin: "13px 12px" }} transition={TRANSITION} variants={RIGHT_VARIANTS}/>
-        </svg>);
+        </SvgRoot>);
 }

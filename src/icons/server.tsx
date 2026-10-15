@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const TOP_RECT_VARIANTS: Variants = {
@@ -31,7 +32,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} className="overflow-visible" fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} className="overflow-visible" fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.g animate={controls} initial="normal" variants={TOP_RECT_VARIANTS}>
             <rect height="8" rx="2" ry="2" width="20" x="2" y="2"/>
             <line x1="6" x2="10" y1="6" y2="6"/>
@@ -40,5 +41,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             <rect height="8" rx="2" ry="2" width="20" x="2" y="14"/>
             <line x1="6" x2="10" y1="18" y2="18"/>
           </motion.g>
-        </svg>);
+        </SvgRoot>);
 }

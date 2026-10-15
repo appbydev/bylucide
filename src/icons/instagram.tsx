@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const RECT_VARIANTS: Variants = {
@@ -72,9 +73,9 @@ const pathControls = useAnimation();
 const lineControls = useAnimation();
  
  useControlsDriver(register, rectControls, pathControls, lineControls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.rect animate={rectControls} height="20" initial="normal" rx="5" ry="5" variants={RECT_VARIANTS} width="20" x="2" y="2"/>
           <motion.path animate={pathControls} d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" initial="normal" variants={PATH_VARIANTS}/>
           <motion.line animate={lineControls} initial="normal" variants={LINE_VARIANTS} x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-        </svg>);
+        </SvgRoot>);
 }

@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CLOUD_VARIANTS: Variants = {
@@ -29,7 +30,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
 const sunControls = useAnimation();
  
  useControlsDriver(register, cloudControls, sunControls);
- return (<svg fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  overflow: "visible" }} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.g animate={cloudControls} initial="normal" variants={CLOUD_VARIANTS}>
             <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>
           </motion.g>
@@ -40,5 +41,5 @@ const sunControls = useAnimation();
         "m19.07 4.93-1.41 1.41",
         "M15.947 12.65a4 4 0 0 0-5.925-4.128",
     ].map((d, index) => (<motion.path animate={sunControls} custom={index + 1} d={d} initial="normal" key={d} variants={SUN_VARIANTS}/>))}
-        </svg>);
+        </SvgRoot>);
 }

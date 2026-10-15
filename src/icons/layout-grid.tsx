@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const RECT_1_VARIANTS: Variants = {
@@ -39,10 +40,10 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.rect animate={controls} height="7" initial="normal" rx="1" variants={RECT_1_VARIANTS} width="7" x="3" y="3"/>
           <motion.rect animate={controls} height="7" initial="normal" rx="1" variants={RECT_2_VARIANTS} width="7" x="14" y="3"/>
           <motion.rect animate={controls} height="7" initial="normal" rx="1" variants={RECT_3_VARIANTS} width="7" x="14" y="14"/>
           <motion.rect animate={controls} height="7" initial="normal" rx="1" variants={RECT_4_VARIANTS} width="7" x="3" y="14"/>
-        </svg>);
+        </SvgRoot>);
 }

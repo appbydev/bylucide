@@ -3,7 +3,7 @@ import * as React from 'react';
 import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
 import { lucideSymbols } from './lucide-catalog';
 
-import type { LegacyAnimationControls } from 'motion/react';
+import { motion, type SVGMotionProps, type LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
 import { captureControls, createPhase, disposePhases, playPhase, type TimelinePhase } from './reversible-timeline';
 
@@ -11,8 +11,20 @@ export interface IconDriver {
   play(signal: AbortSignal): Promise<void>;
   reset(): void;
 }
-export interface IconSvgProps { size: number; color?: string; strokeWidth: number; reduced?: boolean; register(driver: IconDriver | null): void }
+export interface IconSvgProps { size: number | string; color?: string; strokeWidth: number | string; reduced?: boolean; register(driver: IconDriver | null): void }
 export type IconSvg = React.ComponentType<IconSvgProps>;
+
+const SvgRootContext = React.createContext<React.ComponentPropsWithRef<'svg'>>({});
+
+export function SvgRoot({ children, ...props }: React.ComponentPropsWithoutRef<'svg'>) {
+  const { children: extraChildren, ...shell } = React.useContext(SvgRootContext);
+  return <svg {...props} {...shell} className={[props.className, shell.className].filter(Boolean).join(' ')} style={{ ...props.style, ...shell.style }}>{children}{extraChildren}</svg>;
+}
+
+export function MotionSvgRoot({ children, ...props }: Omit<SVGMotionProps<SVGSVGElement>, 'children'> & { children?: React.ReactNode }) {
+  const { children: extraChildren, ...shell } = React.useContext(SvgRootContext);
+  return <motion.svg {...props} {...shell as SVGMotionProps<SVGSVGElement>} className={[props.className, shell.className].filter(Boolean).join(' ')} style={{ ...props.style, ...shell.style }}>{children}{extraChildren}</motion.svg>;
+}
 
 export function useControlsDriver(register: IconSvgProps['register'], ...controls: LegacyAnimationControls[]) {
   useSequenceDriver(register, ['animate'], 'normal', ...controls);
@@ -81,13 +93,20 @@ const snapshot = () => typeof window !== 'undefined' && !!window.matchMedia?.('(
 export function useReduced() { return React.useSyncExternalStore(subscribe, snapshot, () => false); }
 
 // Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
-export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color, strokeWidth = 2, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
+export const IconShell = React.forwardRef<SVGSVGElement, IconProps & { name: string; svg?: IconSvg }>(function IconShell({ name, svg: Svg, size = 24, color = 'currentColor', strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest }, ref) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
   const [hovered, setHovered] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
-  const elementRef = React.useRef<HTMLSpanElement | null>(null);
+  const [element, setElement] = React.useState<SVGSVGElement | null>(null);
+  const rootRef = React.useCallback((node: SVGSVGElement | null) => {
+    setElement(node);
+    if (typeof ref === 'function') {
+      const cleanup = (ref as (node: SVGSVGElement | null) => void | (() => void))(node);
+      if (typeof cleanup === 'function') return () => { setElement(null); cleanup(); };
+    } else if (ref) ref.current = node;
+  }, [ref]);
   const [driver, setDriver] = React.useState<IconDriver | null>(null);
   const presentDriver = React.useRef<IconDriver | null>(null);
   const registerDriver = React.useCallback((next: IconDriver | null) => {
@@ -97,12 +116,11 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
   const controller = React.useRef<AbortController | null>(null);
   const label = rest['aria-label'] || rest['aria-labelledby'];
   React.useEffect(() => {
-    const element = elementRef.current;
     if (!element || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false));
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [element]);
   React.useEffect(() => {
     if (!driver || !visible || reduced || loop === false || (loop === 'hover' && !hovered)) {
       controller.current?.abort();
@@ -128,8 +146,23 @@ export const IconShell = React.forwardRef<HTMLSpanElement, IconProps & { name: s
     void run();
     return () => { token.abort(); if (controller.current === token) controller.current = null; if (presentDriver.current === driver) driver.reset(); };
   }, [driver, visible, reduced, loop, hovered]);
-  const display = reduced && staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : Svg ? <Svg size={size} color={color} strokeWidth={strokeWidth} reduced={reduced} register={registerDriver} /> : staticIcon ? React.createElement(staticIcon, { size, color, strokeWidth, 'aria-hidden': true }) : null;
+  const rootProps: React.ComponentPropsWithRef<'svg'> & { 'data-icon': string } = {
+    ...rest,
+    ref: rootRef,
+    width: rest.width ?? size,
+    height: rest.height ?? size,
+    stroke: rest.stroke ?? color,
+    strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+    className: ['lucide', `lucide-${name}`, className].filter(Boolean).join(' '),
+    'data-icon': name,
+    'aria-hidden': rest['aria-hidden'] ?? (label ? undefined : true),
+    role: rest.role ?? (label ? 'img' : undefined),
+    style,
+    children,
+    onMouseEnter: event => { setHovered(true); onMouseEnter?.(event); },
+    onMouseLeave: event => { setHovered(false); onMouseLeave?.(event); },
+  };
+  const display = reduced && staticIcon ? React.createElement(staticIcon, rootProps) : Svg ? <Svg size={size} color={color} strokeWidth={strokeWidth} reduced={reduced} register={registerDriver} /> : staticIcon ? React.createElement(staticIcon, rootProps) : null;
   if (!display) return null;
-  const sizedDisplay = React.cloneElement(display, { style: { width: '100%', height: '100%', ...display.props.style } });
-  return <span {...rest} ref={node => { elementRef.current = node; if (typeof ref === 'function') ref(node); else if (ref) ref.current = node; }} data-icon={name} aria-hidden={rest['aria-hidden'] ?? (label ? undefined : true)} role={rest.role ?? (label ? 'img' : undefined)} style={{ display: 'inline-flex', verticalAlign: 'middle', ...style, color }} onMouseEnter={event => { setHovered(true); onMouseEnter?.(event); }} onMouseLeave={event => { setHovered(false); onMouseLeave?.(event); }}>{sizedDisplay}</span>;
+  return <SvgRootContext.Provider value={rootProps}>{display}</SvgRootContext.Provider>;
 });

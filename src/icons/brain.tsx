@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const BRAIN_STEM_VARIANTS: Variants = {
@@ -59,7 +60,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={{
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={{
         normal: {
             scale: 1,
             strokeWidth: 2,
@@ -89,5 +90,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
 
           <motion.path animate={controls} d="M6 18a4 4 0 0 1-2-7.464" variants={BRAIN_LOWER_ARC_VARIANTS}/>
           <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

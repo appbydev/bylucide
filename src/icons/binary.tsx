@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const FLIP_DURATION = 0.12;
@@ -45,7 +46,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.rect animate={controls} custom={0} height="6" initial="normal" rx="2" variants={FLIP_OUT_VARIANTS} width="4" x="6" y="4"/>
           <motion.g animate={controls} custom={0} initial="normal" variants={FLIP_IN_VARIANTS}>
             <path d="M6 4h2v6"/>
@@ -69,5 +70,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             <path d="M14 14h2v6"/>
             <path d="M14 20h4"/>
           </motion.g>
-        </svg>);
+        </SvgRoot>);
 }

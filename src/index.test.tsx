@@ -6,7 +6,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Icon, ArrowDownIcon, normalizeName, manifest } from './index';
 import { iconRegistry } from './icon-registry';
-import { useControlsDriver, useSequenceDriver, type IconDriver, type IconSvgProps } from './icon-runtime';
+import { IconShell, MotionSvgRoot, SvgRoot, useControlsDriver, useSequenceDriver, type IconDriver, type IconSvgProps } from './icon-runtime';
 import { createVolumeController } from './volume-cycle';
 import { motion, type LegacyAnimationControls } from 'motion/react';
 import { simpleMotion } from './simple-motion';
@@ -20,6 +20,52 @@ beforeAll(() => {
 });
 afterEach(() => cleanup());
 
+for (const Root of [SvgRoot, MotionSvgRoot]) {
+  test(`${Root.name} preserves internal and shell classes`, () => {
+    const Svg = () => <Root className="overflow-visible internal" />;
+    const { container, rerender } = render(<IconShell name="arrow-down" svg={Svg} className="consumer" loop={false} />);
+    expect(container.querySelector('svg')!.classList.contains('overflow-visible')).toBe(true);
+    expect(container.querySelector('svg')!.classList.contains('internal')).toBe(true);
+    expect(container.querySelector('svg')!.classList.contains('consumer')).toBe(true);
+    rerender(<IconShell name="arrow-down" svg={Svg} loop={false} />);
+    expect(container.querySelector('svg')!.classList.contains('overflow-visible')).toBe(true);
+  });
+}
+
+test('observer reconnects to the current SVG on name changes', () => {
+  const observers: { node?: Element; disconnected: boolean }[] = [];
+  const original = globalThis.IntersectionObserver;
+  Object.assign(globalThis, { IntersectionObserver: class {
+    record: { node?: Element; disconnected: boolean } = { disconnected: false };
+    constructor() { observers.push(this.record); }
+    observe(node: Element) { this.record.node = node; }
+    disconnect() { this.record.disconnected = true; }
+  } });
+  try {
+    const refCalls: (SVGSVGElement | null)[] = [];
+    const ref = (node: SVGSVGElement | null) => { refCalls.push(node); };
+    const { container, rerender, unmount } = render(<Icon name="arrow-down" ref={ref} loop={false} />);
+    const first = container.querySelector('svg')!;
+    expect(observers.length).toBe(1);
+    expect(observers[0]!.node).toBe(first);
+    rerender(<Icon name="arrow-down" ref={ref} loop={false} className="updated" />);
+    expect(refCalls).toEqual([first]);
+    expect(observers.length).toBe(1);
+    rerender(<Icon name="arrow-up" ref={ref} loop={false} />);
+    const current = container.querySelector('svg')!;
+    expect(current).not.toBe(first);
+    expect(first.isConnected).toBe(false);
+    expect(observers[0]!.disconnected).toBe(true);
+    expect(observers.length).toBe(2);
+    expect(observers[1]!.node).toBe(current);
+    unmount();
+    expect(observers[1]!.disconnected).toBe(true);
+  } finally {
+    if (original) globalThis.IntersectionObserver = original;
+    else Reflect.deleteProperty(globalThis, 'IntersectionObserver');
+  }
+});
+
 test('mounted Motion integration in a fresh browser-initialized process', async () => {
   const child = Bun.spawn([process.execPath, `${import.meta.dir}/../scripts/mounted-motion-check.tsx`], { stdout: 'pipe', stderr: 'pipe' });
   const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
@@ -28,6 +74,26 @@ test('mounted Motion integration in a fresh browser-initialized process', async 
 }, 20000);
 
 describe('arquitetura e catálogo unificado', () => {
+  test('native SVG roots preserve sizing, props and refs without layout overrides', () => {
+    for (const name of ['activity', 'calendar', 'loader-circle', 'volume-2']) {
+      const ref = React.createRef<SVGSVGElement>();
+      let clicks = 0;
+      const view = render(<Icon name={name} ref={ref} size="32" absoluteStrokeWidth strokeWidth={4} className="h-4 w-4" onClick={() => clicks++} style={{ opacity: 0.5 }}><title>Test icon</title></Icon>);
+      const svg = view.container.firstElementChild!;
+      expect(svg.tagName.toLowerCase()).toBe('svg');
+      expect(ref.current).toBe(svg as SVGSVGElement);
+      expect(svg.getAttribute('class')).toContain('h-4 w-4');
+      expect(svg.getAttribute('width')).toBe('32');
+      expect(svg.getAttribute('stroke-width')).toBe('3');
+      expect(ref.current!.style.width).toBe('');
+      expect(ref.current!.style.height).toBe('');
+      expect(ref.current!.style.marginTop).toBe('');
+      expect(svg.querySelector('title')?.textContent).toBe('Test icon');
+      fireEvent.click(svg);
+      expect(clicks).toBe(1);
+      view.unmount();
+    }
+  });
   test('every animated catalog module uses a shared driver, never direct start/register', () => {
     const files = readdirSync(`${import.meta.dir}/icons`).filter(file => file.endsWith('.tsx'));
     expect(files).toHaveLength(1698);
@@ -71,7 +137,7 @@ describe('arquitetura e catálogo unificado', () => {
       const source = readFileSync(name === 'volume' ? 'src/volume-cycle.tsx' : `src/icons/${name}.tsx`, 'utf8');
       expect(source, name).not.toContain('useCssHoverDriver');
       expect(source, name).toMatch(/from ['"]motion\/react['"]/);
-      expect(source, name).toMatch(/<motion\./);
+      expect(source, name).toMatch(/<(?:motion\.|MotionSvgRoot\b)/);
       expect(source, name).toMatch(/animate=\{/);
       expect(source, name).toMatch(/useControlsDriver|useSequenceDriver|register/);
     }
@@ -112,9 +178,9 @@ describe('arquitetura e catálogo unificado', () => {
   });
   test('fallback Lucide, acessibilidade, refs e props HTML', () => {
     let clicks = 0;
-    const ref = React.createRef<HTMLSpanElement>();
-    const view = render(<Icon ref={ref} name="calendar" id="icon" data-marker="yes" title="agenda" aria-labelledby="label" onClick={() => clicks++} size={31} strokeWidth={4} />);
-    expect(ref.current).toBe(view.container.querySelector('span'));
+    const ref = React.createRef<SVGSVGElement>();
+    const view = render(<Icon ref={ref} name="calendar" id="icon" data-marker="yes" aria-labelledby="label" onClick={() => clicks++} size={31} strokeWidth={4} />);
+    expect(ref.current).toBe(view.container.querySelector('svg'));
     expect(ref.current?.getAttribute('aria-hidden')).toBeNull();
     expect(ref.current?.getAttribute('role')).toBe('img');
     expect(ref.current?.getAttribute('aria-labelledby')).toBe('label');
@@ -147,12 +213,12 @@ describe('lifecycle único', () => {
         register(driver);
         return () => { mounted = false; register(null); };
       }, [register]);
-      return <svg data-state={resets ? 'normal' : 'animate'} />;
+      return <SvgRoot data-state={resets ? 'normal' : 'animate'} />;
     };
     const wait = () => new Promise(resolve => setTimeout(resolve, 10));
     try {
       const view = render(<Icon name="arrow-down" />);
-      const span = view.container.querySelector('span')!;
+      const span = view.container.querySelector('svg')!;
       expect(plays).toBe(0);
       await act(async () => fireEvent.mouseEnter(span));
       expect(plays).toBe(1);
@@ -209,7 +275,7 @@ describe('lifecycle único', () => {
         register({ play: async () => { plays++; }, reset() {} });
         return () => register(null);
       }, [register]);
-      return <svg data-animated="true" />;
+      return <SvgRoot data-animated="true" />;
     };
     iconRegistry['arrow-down'] = Animated;
     try {
@@ -229,8 +295,10 @@ describe('lifecycle único', () => {
   test('exceções preservam geometria e troca de estado em hover', async () => {
     for (const name of ['keyboard', 'volume', 'wifi-low', 'database', 'list', 'circle-check-big']) {
       const view = render(<Icon name={name} />);
-      const node = view.container.querySelector('span')!;
-      expect(node.querySelector('svg')).toBeTruthy();
+      const node = view.container.querySelector('svg')!;
+      expect(view.container.firstElementChild).toBe(node);
+      expect(node.querySelector('svg')).toBeNull();
+      expect(node.querySelector('path, circle, rect, line, polyline, polygon, ellipse')).toBeTruthy();
       await act(async () => fireEvent.mouseEnter(node));
       if (name === 'volume') expect(node.querySelectorAll('path').length).toBeGreaterThan(0);
       await act(async () => fireEvent.mouseLeave(node));
@@ -260,7 +328,7 @@ describe('lifecycle único', () => {
     machine.reset();
     machine.dispose();
     const view = render(<Icon name="volume" />);
-    const span = view.container.querySelector('span')!;
+    const span = view.container.querySelector('svg')!;
     await act(async () => fireEvent.mouseEnter(span));
     expect(view.container.querySelectorAll('path').length).toBe(5);
     await act(async () => fireEvent.mouseLeave(span));
@@ -278,7 +346,7 @@ test('Motion driver completes, restarts, resets, aborts and unregisters', async 
   function Probe() {
     const controls = { subscribe: () => () => {}, start: async () => {}, stop: () => {}, set: () => {} } as never;
     useControlsDriver(register, controls);
-    return <svg />;
+    return <SvgRoot />;
   }
   const view = render(<Probe />);
   const active = driver!;
@@ -332,7 +400,9 @@ describe('simple motion regressions', () => {
       const source = readFileSync(`src/icons/${file}`, 'utf8');
       if (!source.includes("import { simpleMotion }")) continue;
       count++;
-      expect(source.match(/<motion\.svg[^>]*>/)?.[0]).not.toContain('animate={controls}');
+      const root = source.match(/<(?:SvgRoot|MotionSvgRoot)\b[^>]*>/)?.[0];
+      expect(root).toBeDefined();
+      expect(root!).not.toContain('animate={controls}');
       const children = source.match(/<motion\.(?!svg\b)[\s\S]*?\/>/g) ?? [];
       expect(children.length).toBeGreaterThan(0);
       for (const child of children) {

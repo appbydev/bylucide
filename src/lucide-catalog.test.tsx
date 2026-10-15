@@ -10,16 +10,19 @@ import type { IconComponent, LucideIcon, LucideProps } from './types';
 const markup = (name: string) => renderToStaticMarkup(<library.Icon name={name} loop={false} />);
 
 describe('official Lucide surface', () => {
-  test('span shell keeps original web sizing contract', () => {
+  test('native SVG sizing and layout match upstream Lucide', () => {
     const { container } = render(<library.Icon name="calendar-days" size={31} loop={false} style={{ marginTop: 2 }} />);
-    const span = container.querySelector('span')!;
-    expect(span.style.display).toBe('inline-flex');
-    expect(span.style.verticalAlign).toBe('middle');
-    expect(span.style.marginTop).toBe('2px');
-    expect(span.style.alignItems).toBe('');
-    expect(span.style.justifyContent).toBe('');
-    expect(span.style.flexShrink).toBe('');
-    expect(span.style.lineHeight).toBe('');
+    const svg = container.querySelector('svg')!;
+    const reference = render(<upstream.CalendarDays size={31} style={{ marginTop: 2 }} />).container.querySelector('svg')!;
+    expect(container.firstElementChild).toBe(svg);
+    expect(container.querySelector('span')).toBeNull();
+    for (const attribute of ['width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'class']) {
+      expect(svg.getAttribute(attribute), attribute).toBe(reference.getAttribute(attribute));
+    }
+    expect(svg.style.marginTop).toBe('2px');
+    for (const property of ['display', 'verticalAlign', 'alignItems', 'justifyContent', 'flexShrink', 'lineHeight'] as const) {
+      expect(svg.style[property], property).toBe(reference.style[property]);
+    }
   });
   test('nomes Lucide usados por consumidores comuns são exportados', () => {
     for (const name of ['Activity', 'AlertCircle', 'AlertTriangle', 'AppWindow', 'ArrowDown', 'Bell', 'Calendar', 'Check', 'Home', 'Search', 'Settings', 'User']) {
@@ -46,7 +49,7 @@ describe('official Lucide surface', () => {
       expect(library.normalizeName(name)).toBe('home');
       expect(iconRegistry[library.normalizeName(name)]).toBeDefined();
       expect(markup(name)).toBe(markup('home'));
-      expect(markup(name)).not.toContain('class="lucide');
+      expect(markup(name)).toContain('class="lucide lucide-home');
     }
     expect(library.normalizeName('ArrowDown01')).toBe('arrow-down-0-1');
     expect(iconRegistry[library.normalizeName('ArrowDown01')]).toBeDefined();
@@ -68,10 +71,10 @@ describe('official Lucide surface', () => {
     }
     for (const name of ['Airplane', 'AttachFile', 'KeyCircle', 'NavArrowDown']) expect(Object.hasOwn(library, name)).toBe(false);
   });
-  test('consumer component/props types describe the span-ref contract', () => {
+  test('consumer component/props types describe the SVG-ref contract', () => {
     const Component: LucideIcon = library.Calendar;
     const props: LucideProps = { size: 18 };
-    const ref = React.createRef<HTMLSpanElement>();
+    const ref = React.createRef<SVGSVGElement>();
     expect(renderToStaticMarkup(<Component {...props} ref={ref} />)).toContain('width="18"');
   });
 });

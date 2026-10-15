@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const STRAW_VARIANTS: Variants = {
@@ -66,7 +67,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/>
           <path d="M5 8h14"/>
           <motion.path animate={controls} d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0" variants={WAVE_VARIANTS}/>
@@ -80,5 +81,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
             originX: "50%",
             originY: "50%",
         }} variants={BUBBLE_VARIANTS}/>))}
-        </svg>);
+        </SvgRoot>);
 }

@@ -15,7 +15,7 @@ export function normalizeName(input: string) {
   return Object.hasOwn(lucideNames, input) ? lucideNames[input]! : input;
 }
 
-export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(function Icon({ name = '', ...props }, ref) {
+export const Icon = React.forwardRef<SVGSVGElement, IconProps>(function Icon({ name = '', ...props }, ref) {
   const canonical = normalizeName(name);
   return <IconShell {...props} ref={ref} name={canonical} svg={Object.hasOwn(iconRegistry, canonical) ? iconRegistry[canonical] : undefined} />;
 });

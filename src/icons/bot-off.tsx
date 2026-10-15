@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import { useSequenceDriver, type IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 
 const animations = {
     default: {
@@ -44,7 +45,7 @@ const animations = {
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  useSequenceDriver(register, ['animate'], 'initial', controls);
- return (<motion.svg  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" variants={(animations.default as Record<string, Variants>).group} initial="initial" animate={controls} >
+ return (<MotionSvgRoot  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" variants={(animations.default as Record<string, Variants>).group} initial="initial" animate={controls} >
       <motion.path d="M13.67 8H18a2 2 0 0 1 2 2v4.33" variants={(animations.default as Record<string, Variants>).path1} initial="initial" animate={controls}/>
       <motion.path d="M2 14h2" variants={(animations.default as Record<string, Variants>).path2} initial="initial" animate={controls}/>
       <motion.path d="M20 14h2" variants={(animations.default as Record<string, Variants>).path3} initial="initial" animate={controls}/>
@@ -52,5 +53,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
       <motion.path d="M8 8H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 1.414-.586" variants={(animations.default as Record<string, Variants>).path5} initial="initial" animate={controls}/>
       <motion.path d="M9 13v2" variants={(animations.default as Record<string, Variants>).path6} initial="initial" animate={controls}/>
       <motion.path d="M9.67 4H12v2.33" variants={(animations.default as Record<string, Variants>).path7} initial="initial" animate={controls}/>
-    </motion.svg>);
+    </MotionSvgRoot>);
 }

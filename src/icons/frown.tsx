@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 
@@ -75,10 +76,10 @@ const rightEyeVariants: Variants = {
     },
 };
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={faceVariants} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={faceVariants} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10"/>
           <motion.path animate={controls} d="M16 16s-1.5-2-4-2-4 2-4 2" initial="normal" variants={mouthVariants}/>
           <motion.line animate={controls} initial="normal" variants={leftEyeVariants} x1="9" x2="9.01" y1="9" y2="9"/>
           <motion.line animate={controls} initial="normal" variants={rightEyeVariants} x1="15" x2="15.01" y1="9" y2="9"/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

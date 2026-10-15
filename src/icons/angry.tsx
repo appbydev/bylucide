@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const EYEBROW_ROTATION = 20;
@@ -57,12 +58,12 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={PATH_VARIANTS_FACE} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot  style={{ color }} animate={controls} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} variants={PATH_VARIANTS_FACE} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10"/>
           <motion.path animate={controls} d="M16 16s-1.5-2-4-2-4 2-4 2" variants={PATH_VARIANTS_MOUTH}/>
           <motion.path animate={controls} d="M7.5 8 10 9" variants={PATH_VARIANTS_LEFT_EYEBROW}/>
           <motion.path animate={controls} d="m14 9 2.5-1" variants={PATH_VARIANTS_RIGHT_EYEBROW}/>
           <motion.path animate={controls} d="M9 10h.01" variants={PATH_VARIANTS_EYE}/>
           <motion.path animate={controls} d="M15 10h.01" variants={PATH_VARIANTS_EYE}/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }

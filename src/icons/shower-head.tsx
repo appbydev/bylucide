@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const DROP_VARIANTS: Variants = {
@@ -36,12 +37,12 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <path d="m4 4 2.5 2.5"/>
           <path d="M13.5 6.5a4.95 4.95 0 0 0-7 7"/>
           <path d="M15 5 5 15"/>
           <motion.g animate={controls} initial="normal" variants={DROP_VARIANTS}>
             {DROP_PATH.map((path) => (<motion.path d={path.d} key={path.id} variants={DROP_CHILD_VARIANTS}/>))}
           </motion.g>
-        </svg>);
+        </SvgRoot>);
 }

@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import { useSequenceDriver, type IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 
 const animations = {
     default: {
@@ -47,11 +48,11 @@ const animations = {
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
  useSequenceDriver(register, ['animate'], 'initial', controls);
- return (<motion.svg  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" >
+ return (<MotionSvgRoot  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" >
       <motion.path d="M12,12h-7c-1.1,0-2,.9-2,2v5" variants={(animations.default as Record<string, Variants>).path1} initial="initial" animate={controls}/>
       <motion.circle cx={13} cy={19} r={2} variants={(animations.default as Record<string, Variants>).circle1} initial="initial" animate={controls}/>
       <motion.circle cx={5} cy={19} r={2} variants={(animations.default as Record<string, Variants>).circle2} initial="initial" animate={controls}/>
       <motion.path d="M8,19h3M16,2v17M6,12v-5c0-1.1.9-2,2-2h3l5,5" variants={(animations.default as Record<string, Variants>).path2} initial="initial" animate={controls}/>
       <motion.line x1={22} y1={19} x2={16} y2={19} variants={(animations.default as Record<string, Variants>).line} initial="initial" animate={controls}/>
-    </motion.svg>);
+    </MotionSvgRoot>);
 }

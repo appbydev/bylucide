@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, AnimatePresence, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const DOTS = [
@@ -31,7 +32,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
         <path d="M8 2v4"/>
         <path d="M16 2v4"/>
         <rect height="18" rx="2" width="18" x="3" y="4"/>
@@ -39,5 +40,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         <AnimatePresence>
           {DOTS.map((dot, index) => (<motion.circle animate={controls} custom={index} cx={dot.cx} cy={dot.cy} fill="currentColor" initial="normal" key={`${dot.cx}-${dot.cy}`} r="1" stroke="none" variants={VARIANTS}/>))}
         </AnimatePresence>
-      </svg>);
+      </SvgRoot>);
 }

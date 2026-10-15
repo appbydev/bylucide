@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, cubicBezier } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CUSTOM_EASING = cubicBezier(0.25, 0.1, 0.25, 1);
@@ -8,7 +9,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={controls} d="M3 7v6h6" transition={{ duration: 0.6, ease: CUSTOM_EASING }} variants={{
         normal: { translateX: 0, translateY: 0, rotate: 0 },
         animate: {
@@ -25,5 +26,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
         normal: { scale: 1 },
         animate: { scale: [1, 1.2, 1] },
     }}/>
-        </svg>);
+        </SvgRoot>);
 }

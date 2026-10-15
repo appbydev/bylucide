@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const RAY_LINE_VARIANTS: Variants = {
@@ -40,7 +41,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
 const bodyControls = useAnimation();
  
  useControlsDriver(register, pathControls, bodyControls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <motion.path animate={pathControls} d="M5 7 3 5" initial="visible" variants={RAY_LINE_VARIANTS}/>
           <motion.path animate={pathControls} d="M9 6V3" initial="visible" variants={RAY_LINE_VARIANTS}/>
           <motion.path animate={pathControls} d="m13 7 2-2" initial="visible" variants={RAY_LINE_VARIANTS}/>
@@ -49,5 +50,5 @@ const bodyControls = useAnimation();
             <path d="M11.83 12H20a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h2.17"/>
             <path d="M16 16h2"/>
           </motion.g>
-        </svg>);
+        </SvgRoot>);
 }

@@ -1,6 +1,7 @@
 'use client';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { SvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const SPRAY_DOT_VARIANTS: Variants = {
@@ -31,7 +32,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<SvgRoot  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <rect height="4" width="4" x="15" y="5"/>
           <path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2"/>
           <path d="m13 14 8-2"/>
@@ -39,5 +40,5 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
           <g>
             {DOT_PATHS_RTL.map((item, index) => (<motion.path animate={controls} custom={index} d={item.d} initial="normal" key={item.key} variants={SPRAY_DOT_VARIANTS}/>))}
           </g>
-        </svg>);
+        </SvgRoot>);
 }

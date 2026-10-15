@@ -1,6 +1,7 @@
 'use client';
-import { motion, useAnimation, type Variants } from 'motion/react';
+import { useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
+import { MotionSvgRoot } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const GAVEL_VARIANTS: Variants = {
@@ -24,11 +25,11 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  const controls = useAnimation();
  
  useControlsDriver(register, controls);
- return (<motion.svg animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  transformOrigin: "0% 100%", transformBox: "fill-box" }} variants={GAVEL_VARIANTS} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+ return (<MotionSvgRoot animate={controls} fill="none" height={size} initial="normal" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} style={{ color,  transformOrigin: "0% 100%", transformBox: "fill-box" }} variants={GAVEL_VARIANTS} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           <path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381"/>
           <path d="m16 16 6-6"/>
           <path d="m21.5 10.5-8-8"/>
           <path d="m8 8 6-6"/>
           <path d="m8.5 7.5 8 8"/>
-        </motion.svg>);
+        </MotionSvgRoot>);
 }
