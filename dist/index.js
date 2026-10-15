@@ -6,7 +6,7 @@ var __export = (target, all) => {
 };
 
 // src/index.tsx
-import * as React128 from "react";
+import * as React6 from "react";
 
 // src/icon-manifest.json
 var icon_manifest_default = {
@@ -8095,6 +8095,12 @@ function warnOnce(condition, message, errorCode) {
   warned.add(message);
 }
 
+// node_modules/motion-utils/dist/es/wrap.mjs
+var wrap = (min, max, v) => {
+  const rangeSize = max - min;
+  return ((v - min) % rangeSize + rangeSize) % rangeSize + min;
+};
+
 // node_modules/motion-utils/dist/es/easing/cubic-bezier.mjs
 var calcBezier = (t, a1, a2) => (((1 - 3 * a2 + 3 * a1) * t + (3 * a2 - 6 * a1)) * t + 3 * a1) * t;
 var subdivisionPrecision = 1e-7;
@@ -8150,6 +8156,12 @@ var easeInOut = /* @__PURE__ */ cubicBezier(0.42, 0, 0.58, 1);
 var isEasingArray = /* @__NO_SIDE_EFFECTS__ */ (ease3) => {
   return Array.isArray(ease3) && typeof ease3[0] !== "number";
 };
+
+// node_modules/motion-utils/dist/es/easing/utils/get-easing-for-segment.mjs
+// @__NO_SIDE_EFFECTS__
+function getEasingForSegment(easing, i) {
+  return isEasingArray(easing) ? easing[wrap(0, easing.length, i)] : easing;
+}
 
 // node_modules/motion-utils/dist/es/easing/utils/is-bezier-definition.mjs
 var isBezierDefinition = /* @__NO_SIDE_EFFECTS__ */ (easing) => Array.isArray(easing) && typeof easing[0] === "number";
@@ -10672,6 +10684,94 @@ var AsyncMotionValueAnimation = class extends WithPromise {
   }
 };
 
+// node_modules/motion-dom/dist/es/animation/GroupAnimation.mjs
+var GroupAnimation = class {
+  constructor(animations121) {
+    this.stop = () => this.runAll("stop");
+    this.animations = animations121.filter(Boolean);
+  }
+  get finished() {
+    return Promise.all(this.animations.map((animation) => animation.finished));
+  }
+  /**
+   * TODO: Filter out cancelled or stopped animations before returning
+   */
+  getAll(propName) {
+    return this.animations[0][propName];
+  }
+  setAll(propName, newValue) {
+    for (let i = 0; i < this.animations.length; i++) {
+      this.animations[i][propName] = newValue;
+    }
+  }
+  attachTimeline(timeline) {
+    const subscriptions = this.animations.map((animation) => animation.attachTimeline(timeline));
+    return () => {
+      subscriptions.forEach((cancel, i) => {
+        cancel && cancel();
+        this.animations[i].stop();
+      });
+    };
+  }
+  get time() {
+    return this.getAll("time");
+  }
+  set time(time2) {
+    this.setAll("time", time2);
+  }
+  get speed() {
+    return this.getAll("speed");
+  }
+  set speed(speed) {
+    this.setAll("speed", speed);
+  }
+  get state() {
+    return this.getAll("state");
+  }
+  get startTime() {
+    return this.getAll("startTime");
+  }
+  get duration() {
+    return getMax(this.animations, "duration");
+  }
+  get iterationDuration() {
+    return getMax(this.animations, "iterationDuration");
+  }
+  runAll(methodName) {
+    this.animations.forEach((controls) => controls[methodName]());
+  }
+  play() {
+    this.runAll("play");
+  }
+  pause() {
+    this.runAll("pause");
+  }
+  cancel() {
+    this.runAll("cancel");
+  }
+  complete() {
+    this.runAll("complete");
+  }
+};
+function getMax(animations121, propName) {
+  let max = 0;
+  for (let i = 0; i < animations121.length; i++) {
+    const value = animations121[i][propName];
+    if (value !== null && value > max) {
+      max = value;
+    }
+  }
+  return max;
+}
+
+// node_modules/motion-dom/dist/es/animation/GroupAnimationWithThen.mjs
+var GroupAnimationWithThen = class extends GroupAnimation {
+  then(onResolve, _onReject) {
+    return this.finished.finally(onResolve).then(() => {
+    });
+  }
+};
+
 // node_modules/motion-dom/dist/es/animation/utils/calc-child-stagger.mjs
 function calcChildStagger(children, child, delayChildren, staggerChildren = 0, staggerDirection = 1) {
   const index = Array.from(children).sort((a, b) => a.sortNodePosition(b)).indexOf(child);
@@ -11505,6 +11605,70 @@ var cornerRadiusProps = [
   "borderBottomLeftRadius"
 ];
 
+// node_modules/motion-dom/dist/es/animation/animate/effects.mjs
+var effects = [];
+function addEffect(effect) {
+  invariant(typeof effect.test === "function" && typeof effect.read === "function", "Effects passed to animate.addEffect() need test() and read().", "effect-missing-test");
+  removeEffect(effect);
+  effects.unshift(effect);
+}
+function removeEffect(effect) {
+  removeItem(effects, effect);
+}
+function findEffect(subject) {
+  return effects.find((effect) => effect.test(subject));
+}
+function animateValues(getValue, keyframes2, transition = {}, element) {
+  const animations121 = [];
+  const { velocity } = transition;
+  const reduceMotion = transition.reduceMotion ?? element?.shouldReduceMotion;
+  for (const key in keyframes2) {
+    if (key === "transition" || key === "transitionEnd")
+      continue;
+    const target = keyframes2[key];
+    if (target === void 0)
+      continue;
+    const value = getValue(key);
+    const current = value.get();
+    if (current !== void 0 && !value.isAnimating() && !Array.isArray(target) && target === current && !velocity) {
+      frame.update(() => value.set(target));
+      continue;
+    }
+    value.start(animateMotionValue(key, value, target, reduceMotion && positionalKeys.has(key) ? { type: false } : transition, element));
+    value.animation && animations121.push(value.animation);
+  }
+  const { transitionEnd } = keyframes2;
+  if (transitionEnd) {
+    const applyTransitionEnd = () => frame.update(() => {
+      for (const key in transitionEnd) {
+        getValue(key).set(transitionEnd[key]);
+      }
+    });
+    animations121.length ? Promise.all(animations121).then(applyTransitionEnd) : applyTransitionEnd();
+  }
+  return animations121;
+}
+function animateEffectSubject(effect, subject, keyframes2, transition, element) {
+  return animateValues((key) => {
+    let value = effect.get(subject, key);
+    if (!value) {
+      let initial;
+      if (!element) {
+        const target = keyframes2[key];
+        initial = firstKeyframe(target) ?? effect.read(subject, key, target);
+        invariant(initial !== void 0, `"${key}" can't be read from the animated subject. Provide [from, to] keyframes.`, "effect-unreadable-value");
+      }
+      value = motionValue(initial, { owner: element });
+      effect(subject, { [key]: value });
+    }
+    return value;
+  }, keyframes2, transition, element);
+}
+function firstKeyframe(target) {
+  const first = Array.isArray(target) ? target[0] : void 0;
+  return first === null ? void 0 : first;
+}
+
 // node_modules/motion-dom/dist/es/utils/is-html-element.mjs
 function isHTMLElement(element) {
   return isObject(element) && "offsetHeight" in element && !("ownerSVGElement" in element);
@@ -11538,15 +11702,213 @@ function resolveElements(elementOrSelector, scope, selectorCache) {
   return Array.from(elementOrSelector).filter((element) => element != null);
 }
 
-// node_modules/motion-dom/dist/es/render/html/utils/build-transform.mjs
+// node_modules/motion-dom/dist/es/effects/MotionValueState.mjs
+var MotionValueState = class {
+  /**
+   * @param step - The frameloop step renders are scheduled in. Defaults
+   * to `frame.render`. Effects that feed a render loop running in
+   * `frame.render` (GPU scenes) should write in `frame.preRender`.
+   */
+  constructor(step = frame.render) {
+    this.step = step;
+    this.values = /* @__PURE__ */ new Map();
+    this.pending = [];
+    this.numPending = 0;
+    this.flush = () => {
+      const { pending, numPending } = this;
+      this.numPending = 0;
+      for (let i = 0; i < numPending; i++)
+        pending[i]();
+    };
+  }
+  /**
+   * @param render - Writes the value to the subject. Renders read the
+   * motion value directly rather than a cached copy, so there is one
+   * place a value lives.
+   * @param computed - A value already in this state (e.g. `transform`)
+   * whose render should run whenever `value` changes.
+   */
+  set(name, value, render, computed) {
+    this.values.get(name)?.onRemove();
+    if (computed) {
+      for (const entry of this.values.values()) {
+        if (entry.value === computed)
+          render = entry.render;
+      }
+    }
+    const onChange = () => render && this.schedule(render);
+    value.get() !== void 0 && onChange();
+    const cancelOnChange = value.on("change", onChange);
+    const onRemove = () => {
+      cancelOnChange();
+      render && !computed && this.cancel(render);
+      this.values.get(name)?.onRemove === onRemove && this.values.delete(name);
+    };
+    this.values.set(name, {
+      value,
+      render: computed ? void 0 : render,
+      onRemove
+    });
+    return onRemove;
+  }
+  get(name) {
+    return this.values.get(name)?.value;
+  }
+  /**
+   * Detach every value from this state and return them, so another
+   * renderer can take them over. The state stays cached by its effect,
+   * so the bound transforms are reset too rather than leaking into
+   * values bound later.
+   */
+  release() {
+    const values = /* @__PURE__ */ new Map();
+    this.values.forEach((entry, name) => {
+      values.set(name, entry.value);
+      entry.onRemove();
+    });
+    this.transformKeys = this.transformValues = void 0;
+    return values;
+  }
+  schedule(render) {
+    const { pending, numPending } = this;
+    for (let i = 0; i < numPending; i++) {
+      if (pending[i] === render)
+        return;
+    }
+    numPending || this.step(this.flush);
+    pending[this.numPending++] = render;
+  }
+  cancel(render) {
+    const { pending } = this;
+    for (let i = 0; i < this.numPending; i++) {
+      if (pending[i] === render) {
+        pending[i] = pending[--this.numPending];
+        return;
+      }
+    }
+  }
+};
+
+// node_modules/motion-dom/dist/es/effects/utils/create-effect.mjs
+function createEffect(addValue, { step, ...options } = {}) {
+  const stateCache = /* @__PURE__ */ new WeakMap();
+  const effect = (subject, values) => {
+    const state = stateCache.get(subject) ?? new MotionValueState(step);
+    stateCache.set(subject, state);
+    const subscriptions = [];
+    for (const key in values) {
+      const value = values[key];
+      const remove = addValue(subject, state, key, value);
+      subscriptions.push(remove);
+    }
+    return () => {
+      for (const cancel of subscriptions)
+        cancel();
+    };
+  };
+  return Object.assign(effect, options, {
+    get: (subject, key) => stateCache.get(subject)?.get(key),
+    flush: (subject) => stateCache.get(subject)?.flush(),
+    state: (subject) => stateCache.get(subject)
+  });
+}
+
+// node_modules/motion-dom/dist/es/effects/style/transform.mjs
 var translateAlias = {
   x: "translateX",
   y: "translateY",
   z: "translateZ",
   transformPerspective: "perspective"
 };
+var openers = {};
+function buildTransform(state) {
+  let transform = "";
+  const { transformKeys: keys = [], transformValues: values = {} } = state;
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const value = values[key].get();
+    if (value === void 0)
+      continue;
+    const parsed = typeof value === "number" ? value : parseFloat(value);
+    if (parsed !== (key.startsWith("scale") ? 1 : 0)) {
+      transform += (transform && " ") + (openers[key] || (openers[key] = (translateAlias[key] || key) + "(")) + getValueAsType(value, transformValueTypes[key]) + ")";
+    }
+  }
+  const pathRotation = state.get("pathRotation")?.get();
+  if (pathRotation) {
+    transform += (transform && " ") + "rotate(" + getValueAsType(pathRotation, transformValueTypes.pathRotation) + ")";
+  }
+  return transform || "none";
+}
+
+// node_modules/motion-dom/dist/es/effects/style/index.mjs
+var originProps = /* @__PURE__ */ new Set(["originX", "originY", "originZ"]);
+var styleValue = (state, key) => getValueAsType(state.get(key)?.get(), numberValueTypes[key]);
+var addStyleValue = (element, state, key, value) => {
+  let render = void 0;
+  let computed = void 0;
+  if (transformProps.has(key)) {
+    if (key !== "pathRotation") {
+      const keys = state.transformKeys ?? (state.transformKeys = []);
+      (state.transformValues ?? (state.transformValues = {}))[key] = value;
+      if (!keys.includes(key)) {
+        keys.push(key);
+        keys.sort((a, b) => transformPropOrder.indexOf(a) - transformPropOrder.indexOf(b));
+      }
+    }
+    if (!state.get("transform")) {
+      if (!isHTMLElement(element) && !state.get("transformBox")) {
+        addStyleValue(element, state, "transformBox", new MotionValue("fill-box"));
+      }
+      state.set("transform", new MotionValue("none"), () => {
+        element.style.transform = buildTransform(state);
+      });
+    }
+    computed = state.get("transform");
+  } else if (originProps.has(key)) {
+    if (!state.get("transformOrigin")) {
+      state.set("transformOrigin", new MotionValue(""), () => {
+        const originX = styleValue(state, "originX") ?? "50%";
+        const originY = styleValue(state, "originY") ?? "50%";
+        const originZ = styleValue(state, "originZ") ?? 0;
+        element.style.transformOrigin = `${originX} ${originY} ${originZ}`;
+      });
+    }
+    computed = state.get("transformOrigin");
+  } else if (isCSSVar(key)) {
+    render = () => {
+      element.style.setProperty(key, value.get());
+    };
+  } else {
+    render = () => {
+      element.style[key] = getValueAsType(value.get(), numberValueTypes[key]);
+    };
+  }
+  return state.set(key, value, render, computed);
+};
+var isStyleSubject = (subject) => isHTMLElement(subject) || isSVGElement(subject);
+var readStyleValue = (element, key) => {
+  if (transformProps.has(key)) {
+    return readTransformValue(element, key);
+  }
+  const computedStyle = getComputedStyle(element);
+  const value = isCSSVar(key) ? computedStyle.getPropertyValue(key) : computedStyle[key];
+  return typeof value === "string" && value.trim() || 0;
+};
+var styleSubjectEffect = /* @__PURE__ */ createEffect(addStyleValue, {
+  test: isStyleSubject,
+  read: readStyleValue
+});
+
+// node_modules/motion-dom/dist/es/render/html/utils/build-transform.mjs
+var translateAlias2 = {
+  x: "translateX",
+  y: "translateY",
+  z: "translateZ",
+  transformPerspective: "perspective"
+};
 var numTransforms = transformPropOrder.length;
-function buildTransform(latestValues, transform, transformTemplate) {
+function buildTransform2(latestValues, transform, transformTemplate) {
   let transformString = "";
   let transformIsDefault = true;
   for (let i = 0; i < numTransforms; i++) {
@@ -11565,7 +11927,7 @@ function buildTransform(latestValues, transform, transformTemplate) {
       const valueAsType = getValueAsType(value, numberValueTypes[key]);
       if (!valueIsDefault) {
         transformIsDefault = false;
-        const transformName = translateAlias[key] || key;
+        const transformName = translateAlias2[key] || key;
         transformString += `${transformName}(${valueAsType}) `;
       }
       if (transformTemplate) {
@@ -11612,7 +11974,7 @@ function buildHTMLStyles(state, latestValues, transformTemplate) {
   }
   if (!latestValues.transform) {
     if (hasTransform2 || transformTemplate) {
-      style.transform = buildTransform(latestValues, state.transform, transformTemplate);
+      style.transform = buildTransform2(latestValues, state.transform, transformTemplate);
     } else if (style.transform) {
       style.transform = "none";
     }
@@ -11693,6 +12055,78 @@ function buildSVGAttrs(state, {
   if (pathLength !== void 0) {
     buildSVGPath(attrs, pathLength, pathSpacing, pathOffset, false);
   }
+}
+
+// node_modules/motion-dom/dist/es/effects/attr/index.mjs
+function canSetAsProperty(element, name) {
+  if (!(name in element))
+    return false;
+  const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), name) || Object.getOwnPropertyDescriptor(element, name);
+  return descriptor && typeof descriptor.set === "function";
+}
+var addAttrValue = (element, state, key, value, name = key) => {
+  const isProp = canSetAsProperty(element, name);
+  if (!isProp && (name.startsWith("data") || name.startsWith("aria"))) {
+    name = camelToDash(name);
+  }
+  const type = numberValueTypes[key] || numberValueTypes[name];
+  const render = isProp ? () => {
+    element[name] = getValueAsType(value.get(), numberValueTypes[key]);
+  } : () => {
+    const v = getValueAsType(value.get(), type);
+    if (v === null || v === void 0) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, String(v));
+    }
+  };
+  return state.set(key, value, render);
+};
+
+// node_modules/motion-dom/dist/es/effects/svg/index.mjs
+function addSVGPathValue(element, state, key, value) {
+  frame.render(() => element.setAttribute("pathLength", "1"));
+  if (key === "pathOffset") {
+    return state.set(key, value, () => {
+      const offset = value.get();
+      element.setAttribute("stroke-dashoffset", `${-offset}`);
+    });
+  } else {
+    if (!state.get("stroke-dasharray")) {
+      state.set("stroke-dasharray", new MotionValue("1 1"), () => {
+        const pathLength = state.get("pathLength")?.get() ?? 1;
+        const pathSpacing = state.get("pathSpacing")?.get();
+        element.setAttribute("stroke-dasharray", `${pathLength} ${pathSpacing ?? 1 - Number(pathLength)}`);
+      });
+    }
+    return state.set(key, value, void 0, state.get("stroke-dasharray"));
+  }
+}
+var addSVGValue = (element, state, key, value) => {
+  if (key.startsWith("path")) {
+    return addSVGPathValue(element, state, key, value);
+  } else if (key.startsWith("attr")) {
+    return addAttrValue(element, state, key, value, convertAttrKey(key));
+  }
+  const handler = transformProps.has(key) || originProps.has(key) || isCSSVar(key) || key in element.style ? addStyleValue : addAttrValue;
+  return handler(element, state, key, value);
+};
+var readSVGValue = (element, key) => {
+  if (transformProps.has(key)) {
+    return numberValueTypes[key]?.default || 0;
+  }
+  if (isCSSVar(key) || cssStyleProperties.includes(key)) {
+    return readStyleValue(element, key) || element.getAttribute(camelToDash(key)) || 0;
+  }
+  key = convertAttrKey(key);
+  return element.getAttribute(camelToDash(key)) ?? element.getAttribute(key) ?? void 0;
+};
+var svgSubjectEffect = /* @__PURE__ */ createEffect(addSVGValue, {
+  test: isSVGElement,
+  read: readSVGValue
+});
+function convertAttrKey(key) {
+  return key.replace(/^attr([A-Z])/, (_, firstChar) => firstChar.toLowerCase());
 }
 
 // node_modules/motion-dom/dist/es/projection/geometry/conversion.mjs
@@ -11824,6 +12258,52 @@ function measurePageBox(element, rootProjectionNode2, transformPagePoint) {
   }
   return viewportBox;
 }
+
+// node_modules/motion-dom/dist/es/animation/animate/element.mjs
+var noProps = {};
+var getElementEffect = (element) => isSVGElement(element) ? svgSubjectEffect : styleSubjectEffect;
+var EffectSubject = class {
+  constructor(effect, current) {
+    this.effect = effect;
+    this.current = current;
+    this.KeyframeResolver = DOMKeyframesResolver;
+  }
+  getValue(key) {
+    return this.effect.get(this.current, key);
+  }
+  readValue(key, target) {
+    return this.effect.read(this.current, key, target);
+  }
+  render() {
+    this.effect.flush(this.current);
+  }
+  measureViewportBox() {
+    return measureViewportBox(this.current);
+  }
+  getProps() {
+    return noProps;
+  }
+};
+function animateElement(element, keyframes2, transition, visualElement) {
+  if (visualElement) {
+    return animateValues((key) => visualElement.getValue(key, null), keyframes2, transition, visualElement);
+  }
+  const effect = getElementEffect(element);
+  return animateEffectSubject(effect, element, keyframes2, transition, new EffectSubject(effect, element));
+}
+
+// node_modules/motion-dom/dist/es/effects/prop/index.mjs
+var propEffect = /* @__PURE__ */ createEffect((subject, state, key, value) => {
+  return state.set(key, value, () => {
+    subject[key] = value.get();
+  });
+}, {
+  test: (subject) => isObject(subject),
+  read: (subject, key) => {
+    const value = subject[key];
+    return typeof value === "string" || typeof value === "number" ? value : void 0;
+  }
+});
 
 // node_modules/motion-dom/dist/es/frameloop/microtask.mjs
 var { schedule: microtask, cancel: cancelMicrotask } = /* @__PURE__ */ createRenderBatcher(queueMicrotask, false);
@@ -12882,7 +13362,7 @@ function shallowCompare(next, prev) {
 // node_modules/motion-dom/dist/es/render/utils/animation-state.mjs
 var reversePriorityOrder = [...variantPriorityOrder].reverse();
 function createAnimationState(visualElement) {
-  let animate = (animations121) => Promise.all(animations121.map(({ animation, options }) => animateVisualElement(visualElement, animation, options)));
+  let animate2 = (animations121) => Promise.all(animations121.map(({ animation, options }) => animateVisualElement(visualElement, animation, options)));
   let state = createState();
   let isInitialRender = true;
   let wasReset = false;
@@ -12994,7 +13474,7 @@ function createAnimationState(visualElement) {
     }
     const blockAnimation = isMounting && visualElement.blockInitialAnimation || isInitialRender && !manuallyAnimateOnMount && (props.initial === false || props.initial === props.animate);
     isInitialRender = wasReset = false;
-    return !blockAnimation && animations121.length ? animate(animations121) : Promise.resolve();
+    return !blockAnimation && animations121.length ? animate2(animations121) : Promise.resolve();
   }
   function setActive(type, isActive) {
     if (state[type].isActive === isActive)
@@ -13015,7 +13495,7 @@ function createAnimationState(visualElement) {
      * @internal
      */
     setAnimateFunction: (makeAnimator) => {
-      animate = makeAnimator(visualElement);
+      animate2 = makeAnimator(visualElement);
     },
     getState: () => state,
     reset: () => {
@@ -14990,10 +15470,10 @@ import { useContext as useContext4, useMemo as useMemo3 } from "react";
 // node_modules/framer-motion/dist/es/context/MotionContext/utils.mjs
 function getCurrentTreeVariants(props, context) {
   if (isControllingVariants(props)) {
-    const { initial, animate } = props;
+    const { initial, animate: animate2 } = props;
     return {
       initial: initial === false || isVariantLabel(initial) ? initial : void 0,
-      animate: isVariantLabel(animate) ? animate : void 0
+      animate: isVariantLabel(animate2) ? animate2 : void 0
     };
   }
   return props.inherit !== false ? context : {};
@@ -15001,8 +15481,8 @@ function getCurrentTreeVariants(props, context) {
 
 // node_modules/framer-motion/dist/es/context/MotionContext/create.mjs
 function useCreateMotionContext(props) {
-  const { initial, animate } = getCurrentTreeVariants(props, useContext4(MotionContext));
-  return useMemo3(() => ({ initial, animate }), [variantLabelsAsDependency(initial), variantLabelsAsDependency(animate)]);
+  const { initial, animate: animate2 } = getCurrentTreeVariants(props, useContext4(MotionContext));
+  return useMemo3(() => ({ initial, animate: animate2 }), [variantLabelsAsDependency(initial), variantLabelsAsDependency(animate2)]);
 }
 function variantLabelsAsDependency(prop) {
   return Array.isArray(prop) ? prop.join(" ") : prop;
@@ -15227,18 +15707,18 @@ function makeLatestValues(props, context, presenceContext, scrapeMotionValues) {
   for (const key in motionValues) {
     values[key] = resolveMotionValue(motionValues[key]);
   }
-  let { initial, animate } = props;
+  let { initial, animate: animate2 } = props;
   const isControllingVariants$1 = isControllingVariants(props);
   const isVariantNode$1 = isVariantNode(props);
   if (context && isVariantNode$1 && !isControllingVariants$1 && props.inherit !== false) {
     if (initial === void 0)
       initial = context.initial;
-    if (animate === void 0)
-      animate = context.animate;
+    if (animate2 === void 0)
+      animate2 = context.animate;
   }
   let isInitialAnimationBlocked = presenceContext ? presenceContext.initial === false : false;
   isInitialAnimationBlocked = isInitialAnimationBlocked || initial === false;
-  const variantToSet = isInitialAnimationBlocked ? animate : initial;
+  const variantToSet = isInitialAnimationBlocked ? animate2 : initial;
   if (variantToSet && typeof variantToSet !== "boolean" && !isAnimationControls(variantToSet)) {
     const list = Array.isArray(variantToSet) ? variantToSet : [variantToSet];
     for (let i = 0; i < list.length; i++) {
@@ -15537,9 +16017,9 @@ var AnimationFeature = class extends Feature {
     node.animationState || (node.animationState = createAnimationState(node));
   }
   updateAnimationControlsSubscription() {
-    const { animate } = this.node.getProps();
-    if (isAnimationControls(animate)) {
-      this.unmountControls = animate.subscribe(this.node);
+    const { animate: animate2 } = this.node.getProps();
+    if (isAnimationControls(animate2)) {
+      this.unmountControls = animate2.subscribe(this.node);
     }
   }
   /**
@@ -15549,9 +16029,9 @@ var AnimationFeature = class extends Feature {
     this.updateAnimationControlsSubscription();
   }
   update() {
-    const { animate } = this.node.getProps();
+    const { animate: animate2 } = this.node.getProps();
     const { animate: prevAnimate } = this.node.prevProps || {};
-    if (animate !== prevAnimate) {
+    if (animate2 !== prevAnimate) {
       this.updateAnimationControlsSubscription();
     }
   }
@@ -16791,16 +17271,16 @@ function setValues(visualElement, definition) {
 }
 function animationControls() {
   let hasMounted = false;
-  const subscribers = /* @__PURE__ */ new Set();
+  const subscribers2 = /* @__PURE__ */ new Set();
   const controls = {
     subscribe(visualElement) {
-      subscribers.add(visualElement);
-      return () => void subscribers.delete(visualElement);
+      subscribers2.add(visualElement);
+      return () => void subscribers2.delete(visualElement);
     },
     start(definition, transitionOverride) {
       invariant(hasMounted, "controls.start() should only be called after a component has mounted. Consider calling within a useEffect hook.");
       const animations121 = [];
-      subscribers.forEach((visualElement) => {
+      subscribers2.forEach((visualElement) => {
         animations121.push(animateVisualElement(visualElement, definition, {
           transitionOverride
         }));
@@ -16809,12 +17289,12 @@ function animationControls() {
     },
     set(definition) {
       invariant(hasMounted, "controls.set() should only be called after a component has mounted. Consider calling within a useEffect hook.");
-      return subscribers.forEach((visualElement) => {
+      return subscribers2.forEach((visualElement) => {
         setValues(visualElement, definition);
       });
     },
     stop() {
-      subscribers.forEach((visualElement) => {
+      subscribers2.forEach((visualElement) => {
         stopAnimation(visualElement);
       });
     },
@@ -16828,6 +17308,379 @@ function animationControls() {
   };
   return controls;
 }
+
+// node_modules/framer-motion/dist/es/animation/utils/is-dom-keyframes.mjs
+function isDOMKeyframes(keyframes2) {
+  return typeof keyframes2 === "object" && !Array.isArray(keyframes2);
+}
+
+// node_modules/framer-motion/dist/es/animation/animate/resolve-subjects.mjs
+function resolveSubjects(subject, keyframes2, scope, selectorCache) {
+  if (subject == null) {
+    return [];
+  }
+  if (typeof subject === "string" && isDOMKeyframes(keyframes2)) {
+    return resolveElements(subject, scope, selectorCache);
+  } else if (subject instanceof NodeList) {
+    return Array.from(subject);
+  } else if (Array.isArray(subject)) {
+    return subject.filter((s) => s != null);
+  } else {
+    return [subject];
+  }
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/utils/calc-repeat-duration.mjs
+function calculateRepeatDuration(duration, repeat, repeatDelay) {
+  return duration * (repeat + 1) + repeatDelay * repeat;
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/utils/calc-time.mjs
+function calcNextTime(current, next, prev, labels) {
+  if (typeof next === "number") {
+    return next;
+  } else if (next.startsWith("-") || next.startsWith("+")) {
+    return Math.max(0, current + parseFloat(next));
+  } else if (next === "<") {
+    return prev;
+  } else if (next.startsWith("<")) {
+    return Math.max(0, prev + parseFloat(next.slice(1)));
+  } else {
+    return labels.get(next) ?? current;
+  }
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/utils/edit.mjs
+function eraseKeyframes(sequence, startTime, endTime) {
+  for (let i = 0; i < sequence.length; i++) {
+    const keyframe = sequence[i];
+    if (keyframe.at > startTime && keyframe.at < endTime) {
+      removeItem(sequence, keyframe);
+      i--;
+    }
+  }
+}
+function addKeyframes(sequence, keyframes2, easing, offset, startTime, endTime) {
+  eraseKeyframes(sequence, startTime, endTime);
+  for (let i = 0; i < keyframes2.length; i++) {
+    sequence.push({
+      value: keyframes2[i],
+      at: mixNumber(startTime, endTime, offset[i]),
+      easing: getEasingForSegment(easing, i)
+    });
+  }
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/utils/normalize-times.mjs
+function normalizeTimes(times, repeat, repeatDelayUnits = 0) {
+  const totalUnits = repeat + 1 + repeat * repeatDelayUnits;
+  for (let i = 0; i < times.length; i++) {
+    times[i] = times[i] / totalUnits;
+  }
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/utils/sort.mjs
+function compareByTime(a, b) {
+  if (a.at === b.at) {
+    if (a.value === null)
+      return 1;
+    if (b.value === null)
+      return -1;
+    return 0;
+  } else {
+    return a.at - b.at;
+  }
+}
+
+// node_modules/framer-motion/dist/es/animation/sequence/create.mjs
+var defaultSegmentEasing = "easeInOut";
+var MAX_REPEAT = 20;
+function createAnimationsFromSequence(sequence, { defaultTransition = {}, ...sequenceTransition } = {}, scope, generators) {
+  const defaultDuration = defaultTransition.duration || 0.3;
+  const animationDefinitions = /* @__PURE__ */ new Map();
+  const sequences = /* @__PURE__ */ new Map();
+  const elementCache = {};
+  const timeLabels = /* @__PURE__ */ new Map();
+  let prevTime = 0;
+  let currentTime = 0;
+  let totalDuration = 0;
+  for (let i = 0; i < sequence.length; i++) {
+    const segment = sequence[i];
+    if (typeof segment === "string") {
+      timeLabels.set(segment, currentTime);
+      continue;
+    } else if (!Array.isArray(segment)) {
+      timeLabels.set(segment.name, calcNextTime(currentTime, segment.at, prevTime, timeLabels));
+      continue;
+    }
+    let [subject, keyframes2, transition = {}] = segment;
+    if (transition.at !== void 0) {
+      currentTime = calcNextTime(currentTime, transition.at, prevTime, timeLabels);
+    }
+    let maxDuration = 0;
+    const resolveValueSequence = (valueKeyframes, valueTransition, valueSequence, elementIndex = 0, numSubjects = 0) => {
+      const valueKeyframesAsList = keyframesAsList(valueKeyframes);
+      const { delay: delay2 = 0, times = defaultOffset(valueKeyframesAsList), type = defaultTransition.type || "keyframes", repeat, repeatType, repeatDelay = 0, ...remainingTransition } = valueTransition;
+      let { ease: ease3 = defaultTransition.ease || "easeOut", duration } = valueTransition;
+      const calculatedDelay = typeof delay2 === "function" ? delay2(elementIndex, numSubjects) : delay2;
+      const numKeyframes = valueKeyframesAsList.length;
+      const createGenerator = isGenerator(type) ? type : generators?.[type || "keyframes"];
+      if (numKeyframes <= 2 && createGenerator) {
+        let absoluteDelta = 100;
+        if (numKeyframes === 2 && isNumberKeyframesArray(valueKeyframesAsList)) {
+          const delta = valueKeyframesAsList[1] - valueKeyframesAsList[0];
+          absoluteDelta = Math.abs(delta);
+        }
+        const springTransition = {
+          ...defaultTransition,
+          ...remainingTransition
+        };
+        if (duration !== void 0) {
+          springTransition.duration = secondsToMilliseconds(duration);
+        }
+        const springEasing = createGeneratorEasing(springTransition, absoluteDelta, createGenerator);
+        ease3 = springEasing.ease;
+        duration = springEasing.duration;
+      }
+      duration ?? (duration = defaultDuration);
+      const startTime = currentTime + calculatedDelay;
+      if (times.length === 1 && times[0] === 0) {
+        times[1] = 1;
+      }
+      const remainder = times.length - valueKeyframesAsList.length;
+      remainder > 0 && fillOffset(times, remainder);
+      valueKeyframesAsList.length === 1 && valueKeyframesAsList.unshift(null);
+      if (repeat) {
+        warning(repeat < MAX_REPEAT, `Sequence segments can't repeat ${repeat} times \u2014 ignoring repeat option. Use a value below ${MAX_REPEAT} or apply repeat at the sequence level instead.`);
+      }
+      if (repeat && repeat < MAX_REPEAT) {
+        const repeatDelayUnits = duration > 0 ? repeatDelay / duration : 0;
+        duration = calculateRepeatDuration(duration, repeat, repeatDelay);
+        const originalKeyframes = [...valueKeyframesAsList];
+        const originalTimes = [...times];
+        ease3 = Array.isArray(ease3) ? [...ease3] : [ease3];
+        const originalEase = [...ease3];
+        const isFlipping = repeatType === "reverse" || repeatType === "mirror";
+        let flippedKeyframes = originalKeyframes;
+        let flippedEases = originalEase;
+        if (isFlipping) {
+          flippedKeyframes = [...originalKeyframes].reverse();
+          if (repeatType === "reverse") {
+            flippedEases = [...originalEase].reverse().map((e) => typeof e === "function" ? reverseEasing(e) : e);
+          }
+        }
+        for (let repeatIndex = 0; repeatIndex < repeat; repeatIndex++) {
+          const isFlipped = isFlipping && repeatIndex % 2 === 0;
+          const iterKeyframes = isFlipped ? flippedKeyframes : originalKeyframes;
+          const iterEase = isFlipped ? flippedEases : originalEase;
+          const iterStartOffset = (repeatIndex + 1) * (1 + repeatDelayUnits);
+          if (repeatDelayUnits > 0) {
+            valueKeyframesAsList.push(valueKeyframesAsList[valueKeyframesAsList.length - 1]);
+            times.push(iterStartOffset);
+            ease3.push("linear");
+          }
+          valueKeyframesAsList.push(...iterKeyframes);
+          for (let keyframeIndex = 0; keyframeIndex < iterKeyframes.length; keyframeIndex++) {
+            times.push(originalTimes[keyframeIndex] + iterStartOffset);
+            ease3.push(keyframeIndex === 0 ? "linear" : getEasingForSegment(iterEase, keyframeIndex - 1));
+          }
+        }
+        normalizeTimes(times, repeat, repeatDelayUnits);
+      }
+      const targetTime = startTime + duration;
+      addKeyframes(valueSequence, valueKeyframesAsList, ease3, times, startTime, targetTime);
+      maxDuration = Math.max(calculatedDelay + duration, maxDuration);
+      totalDuration = Math.max(targetTime, totalDuration);
+    };
+    if (isMotionValue(subject)) {
+      const subjectSequence = getSubjectSequence(subject, sequences);
+      resolveValueSequence(keyframes2, transition, getValueSequence("default", subjectSequence));
+    } else {
+      const subjects = resolveSubjects(subject, keyframes2, scope, elementCache);
+      const numSubjects = subjects.length;
+      for (let subjectIndex = 0; subjectIndex < numSubjects; subjectIndex++) {
+        keyframes2 = keyframes2;
+        transition = transition;
+        const thisSubject = subjects[subjectIndex];
+        const subjectSequence = getSubjectSequence(thisSubject, sequences);
+        for (const key in keyframes2) {
+          resolveValueSequence(keyframes2[key], getValueTransition2(transition, key), getValueSequence(key, subjectSequence), subjectIndex, numSubjects);
+        }
+      }
+    }
+    prevTime = currentTime;
+    currentTime += maxDuration;
+  }
+  sequences.forEach((valueSequences, element) => {
+    for (const key in valueSequences) {
+      const valueSequence = valueSequences[key];
+      valueSequence.sort(compareByTime);
+      const keyframes2 = [];
+      const valueOffset = [];
+      const valueEasing = [];
+      for (let i = 0; i < valueSequence.length; i++) {
+        const { at, value, easing } = valueSequence[i];
+        keyframes2.push(value);
+        valueOffset.push(progress(0, totalDuration, at));
+        valueEasing.push(easing || "easeOut");
+      }
+      if (valueOffset[0] !== 0) {
+        valueOffset.unshift(0);
+        keyframes2.unshift(keyframes2[0]);
+        valueEasing.unshift(defaultSegmentEasing);
+      }
+      if (valueOffset[valueOffset.length - 1] !== 1) {
+        valueOffset.push(1);
+        keyframes2.push(null);
+      }
+      if (!animationDefinitions.has(element)) {
+        animationDefinitions.set(element, {
+          keyframes: {},
+          transition: {}
+        });
+      }
+      const definition = animationDefinitions.get(element);
+      definition.keyframes[key] = keyframes2;
+      const { type: _type, ...remainingDefaultTransition } = defaultTransition;
+      definition.transition[key] = {
+        ...remainingDefaultTransition,
+        duration: totalDuration,
+        ease: valueEasing,
+        times: valueOffset,
+        ...sequenceTransition
+      };
+    }
+  });
+  return animationDefinitions;
+}
+function getSubjectSequence(subject, sequences) {
+  !sequences.has(subject) && sequences.set(subject, {});
+  return sequences.get(subject);
+}
+function getValueSequence(name, sequences) {
+  if (!sequences[name])
+    sequences[name] = [];
+  return sequences[name];
+}
+function keyframesAsList(keyframes2) {
+  return Array.isArray(keyframes2) ? keyframes2 : [keyframes2];
+}
+function getValueTransition2(transition, key) {
+  return transition && transition[key] ? {
+    ...transition,
+    ...transition[key]
+  } : { ...transition };
+}
+var isNumber = (keyframe) => typeof keyframe === "number";
+var isNumberKeyframesArray = (keyframes2) => keyframes2.every(isNumber);
+
+// node_modules/framer-motion/dist/es/animation/animate/subject.mjs
+function isSingleValue(subject, keyframes2) {
+  return isMotionValue(subject) || typeof subject === "number" || typeof subject === "string" && !isDOMKeyframes(keyframes2);
+}
+function animateSubject(subject, keyframes2, options, scope) {
+  const animations121 = [];
+  if (isSingleValue(subject, keyframes2)) {
+    animations121.push(animateSingleValue(subject, isDOMKeyframes(keyframes2) ? keyframes2.default || keyframes2 : keyframes2, options ? options.default || options : options));
+  } else {
+    if (subject == null) {
+      return animations121;
+    }
+    const subjects = resolveSubjects(subject, keyframes2, scope);
+    const numSubjects = subjects.length;
+    invariant(Boolean(numSubjects), "No valid elements provided.", "no-valid-elements");
+    for (let i = 0; i < numSubjects; i++) {
+      const thisSubject = subjects[i];
+      const transition = { ...options };
+      if ("delay" in transition && typeof transition.delay === "function") {
+        transition.delay = transition.delay(i, numSubjects);
+      }
+      if (thisSubject instanceof Element) {
+        animations121.push(...animateElement(thisSubject, keyframes2, transition, visualElementStore.get(thisSubject)));
+      } else {
+        animations121.push(...animateEffectSubject(findEffect(thisSubject) ?? propEffect, thisSubject, keyframes2, transition));
+      }
+    }
+  }
+  return animations121;
+}
+
+// node_modules/framer-motion/dist/es/animation/animate/sequence.mjs
+function animateSequence(sequence, options, scope) {
+  const animations121 = [];
+  const processedSequence = sequence.map((segment) => {
+    if (Array.isArray(segment) && typeof segment[0] === "function") {
+      const callback = segment[0];
+      const mv = motionValue(0);
+      mv.on("change", callback);
+      if (segment.length === 1) {
+        return [mv, [0, 1]];
+      } else if (segment.length === 2) {
+        return [mv, [0, 1], segment[1]];
+      } else {
+        return [mv, segment[1], segment[2]];
+      }
+    }
+    return segment;
+  });
+  const animationDefinitions = createAnimationsFromSequence(processedSequence, options, scope, { spring });
+  animationDefinitions.forEach(({ keyframes: keyframes2, transition }, subject) => {
+    animations121.push(...animateSubject(subject, keyframes2, transition));
+  });
+  return animations121;
+}
+
+// node_modules/framer-motion/dist/es/animation/animate/index.mjs
+function isSequence(value) {
+  return Array.isArray(value) && value.some(Array.isArray);
+}
+function createScopedAnimate(options = {}) {
+  const { scope, reduceMotion, skipAnimations } = options;
+  function scopedAnimate(subjectOrSequence, optionsOrKeyframes, options2) {
+    let animations121 = [];
+    let animationOnComplete;
+    const inherited = {};
+    if (reduceMotion !== void 0)
+      inherited.reduceMotion = reduceMotion;
+    if (skipAnimations !== void 0)
+      inherited.skipAnimations = skipAnimations;
+    if (isSequence(subjectOrSequence)) {
+      const { onComplete, ...sequenceOptions } = optionsOrKeyframes || {};
+      if (typeof onComplete === "function") {
+        animationOnComplete = onComplete;
+      }
+      animations121 = animateSequence(subjectOrSequence, { ...inherited, ...sequenceOptions }, scope);
+    } else {
+      const { onComplete, ...rest } = options2 || {};
+      if (typeof onComplete === "function") {
+        animationOnComplete = onComplete;
+      }
+      animations121 = animateSubject(subjectOrSequence, optionsOrKeyframes, { ...inherited, ...rest }, scope);
+    }
+    const animation = new GroupAnimationWithThen(animations121);
+    if (animationOnComplete) {
+      animation.finished.then(animationOnComplete);
+    }
+    if (scope) {
+      scope.animations.push(animation);
+      animation.finished.then(() => {
+        removeItem(scope.animations, animation);
+      });
+    }
+    return animation;
+  }
+  return scopedAnimate;
+}
+var animate = Object.assign(createScopedAnimate(), {
+  /**
+   * Register an effect so `animate()` can animate the subjects it
+   * claims, for instance `animate.addEffect(threeEffect)`. The most
+   * recently added effect is tested first. DOM elements are always
+   * animated directly.
+   */
+  addEffect,
+  removeEffect
+});
 
 // node_modules/framer-motion/dist/es/animation/hooks/use-animation.mjs
 function useAnimationControls() {
@@ -66343,12 +67196,91 @@ var lucideSymbols = {
   "zoom-out": "ZoomOut"
 };
 
+// src/reversible-timeline.ts
+var subscribers = /* @__PURE__ */ new WeakMap();
+function captureControls(control) {
+  if (subscribers.has(control)) return;
+  const elements = /* @__PURE__ */ new Set();
+  subscribers.set(control, elements);
+  const original = control.subscribe.bind(control);
+  control.subscribe = ((element) => {
+    elements.add(element);
+    const unsubscribe = original(element);
+    return () => {
+      elements.delete(element);
+      unsubscribe();
+    };
+  });
+}
+function createPhase(controls, names) {
+  const tracks = [];
+  const visited = /* @__PURE__ */ new Set();
+  const visit = (element, name, offset = 0) => {
+    if (visited.has(element)) return;
+    visited.add(element);
+    let target = element.getVariant(name);
+    if (typeof target === "function") {
+      const current = Object.fromEntries([...element.values].map(([key, value]) => [key, value.get()]));
+      const velocity = Object.fromEntries([...element.values].map(([key, value]) => [key, value.getVelocity()]));
+      target = target(element.getProps().custom, current, velocity);
+    }
+    if (target) {
+      const { transition: transition2 = element.getProps().transition ?? {}, transitionEnd, ...values } = target;
+      for (const [key, value] of Object.entries(values)) {
+        const motionValue2 = element.getValue(key, element.readValue(key) ?? (Array.isArray(value) ? value[0] : value));
+        const options = { ...transition2, ...transition2[key] ?? transition2.default ?? {} };
+        const delay2 = offset + (options.delay ?? 0);
+        const animation = animate(motionValue2, value, { ...options, delay: 0, repeat: options.repeat === Infinity ? 0 : options.repeat, autoplay: false, driver: (update) => ({ start: () => update(0), stop: () => {
+        }, now: () => 0 }) });
+        const duration = animation.duration * ((options.repeat ?? 0) === Infinity ? 1 : 1 + (options.repeat ?? 0)) + (options.repeatDelay ?? 0) * (Number.isFinite(options.repeat) ? options.repeat : 0);
+        tracks.push({ animation, delay: delay2, duration });
+      }
+    }
+    const children = [...element.variantChildren ?? []];
+    const transition = target?.transition ?? {};
+    children.forEach((child, index) => visit(child, name, offset + (transition.delayChildren ?? 0) + (transition.staggerChildren ?? 0) * (transition.staggerDirection === -1 ? children.length - 1 - index : index)));
+  };
+  controls.forEach((control, index) => subscribers.get(control)?.forEach((element) => visit(element, names[index] ?? names[0] ?? "")));
+  return { tracks, duration: Math.max(0, ...tracks.map((track) => track.delay + track.duration)) };
+}
+function seekPhase(phase, time2) {
+  for (const track of phase.tracks) track.animation.time = Math.max(0, Math.min(track.duration, time2 - track.delay));
+}
+async function playPhase(phase, reverse, signal) {
+  if (signal.aborted) return;
+  seekPhase(phase, reverse ? phase.duration : 0);
+  if (!phase.duration) return;
+  await new Promise((resolve) => {
+    const finish = () => {
+      signal.removeEventListener("abort", abort);
+      resolve();
+    };
+    let clock;
+    const abort = () => {
+      clock?.stop();
+      finish();
+    };
+    clock = animate(reverse ? phase.duration : 0, reverse ? 0 : phase.duration, {
+      duration: phase.duration,
+      ease: "linear",
+      onUpdate: (time2) => seekPhase(phase, time2),
+      onComplete: finish
+    });
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) abort();
+  });
+}
+function disposePhases(phases) {
+  phases.forEach((phase) => phase.tracks.forEach((track) => track.animation.stop()));
+}
+
 // src/icon-runtime.tsx
 import { jsx as jsx6 } from "react/jsx-runtime";
 function useControlsDriver(register, ...controls) {
   useSequenceDriver(register, ["animate"], "normal", ...controls);
 }
 function useSequenceDriver(register, phases, resting, ...controls) {
+  controls.forEach(captureControls);
   const current = React4.useRef(controls);
   current.current = controls;
   const currentPhases = React4.useRef(phases);
@@ -66356,14 +67288,33 @@ function useSequenceDriver(register, phases, resting, ...controls) {
   const currentResting = React4.useRef(resting);
   currentResting.current = resting;
   const play = React4.useRef(null);
+  const playback = React4.useRef(null);
   React4.useLayoutEffect(() => {
     const driver = {
       async play(signal) {
         if (signal.aborted) return;
+        playback.current?.abort();
+        const parentSignal = signal;
+        const token = new AbortController();
+        playback.current = token;
+        const cancel = () => token.abort();
+        parentSignal.addEventListener("abort", cancel, { once: true });
+        signal = token.signal;
         const completed = (async () => {
-          for (const phase of currentPhases.current) {
-            if (signal.aborted) break;
-            await Promise.all(current.current.map((control) => control.start(phase)));
+          const timeline = [];
+          try {
+            for (const name of currentPhases.current) {
+              if (signal.aborted) break;
+              const phase = typeof name === "number" ? { tracks: [], duration: name } : createPhase(current.current, Array.isArray(name) ? name : [name]);
+              timeline.push(phase);
+              await playPhase(phase, false, signal);
+            }
+            for (const phase of [...timeline].reverse()) {
+              if (signal.aborted) break;
+              await playPhase(phase, true, signal);
+            }
+          } finally {
+            disposePhases(timeline);
           }
         })();
         play.current = completed;
@@ -66377,19 +67328,24 @@ function useSequenceDriver(register, phases, resting, ...controls) {
             signal.addEventListener("abort", onAbort, { once: true });
           })]);
         } finally {
+          parentSignal.removeEventListener("abort", cancel);
+          if (playback.current === token) playback.current = null;
           if (onAbort) signal.removeEventListener("abort", onAbort);
           if (play.current === completed) play.current = null;
         }
       },
       reset() {
-        current.current.forEach((control) => {
+        playback.current?.abort();
+        current.current.forEach((control, index) => {
           control.stop();
-          control.set(currentResting.current);
+          const resting2 = currentResting.current;
+          control.set(Array.isArray(resting2) ? resting2[index] : resting2);
         });
       }
     };
     register(driver);
     return () => {
+      playback.current?.abort();
       current.current.forEach((control) => control.stop());
       register(null);
     };
@@ -66622,7 +67578,7 @@ function IconSvg3({ size, color: color2, strokeWidth, register }) {
 // src/icons/accessibility.tsx
 import { jsx as jsx10, jsxs as jsxs5 } from "react/jsx-runtime";
 var CIRCLE_VARIANTS = {
-  initial: {
+  normal: {
     y: 0,
     x: 0
   },
@@ -66636,7 +67592,7 @@ var CIRCLE_VARIANTS = {
   }
 };
 var PRIMARY_GROUP_VARIANTS = {
-  initial: {
+  normal: {
     rotate: 0
   },
   animate: {
@@ -66648,7 +67604,7 @@ var PRIMARY_GROUP_VARIANTS = {
   }
 };
 var SECONDARY_GROUP_VARIANTS = {
-  initial: {
+  normal: {
     rotate: 0
   },
   animate: {
@@ -66661,7 +67617,7 @@ var SECONDARY_GROUP_VARIANTS = {
   }
 };
 var PATH_VARIANTS = {
-  initial: {
+  normal: {
     rotate: 0,
     d: "M8 5 L5 8"
   },
@@ -66680,13 +67636,13 @@ function IconSvg4({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
   return /* @__PURE__ */ jsxs5("svg", { style: { color: color2 }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
-    /* @__PURE__ */ jsx10(motion2.circle, { animate: controls, cx: "16", cy: "4", initial: "initial", r: "1", variants: CIRCLE_VARIANTS }),
-    /* @__PURE__ */ jsxs5(motion2.g, { animate: controls, initial: "initial", variants: PRIMARY_GROUP_VARIANTS, children: [
+    /* @__PURE__ */ jsx10(motion2.circle, { animate: controls, cx: "16", cy: "4", initial: "normal", r: "1", variants: CIRCLE_VARIANTS }),
+    /* @__PURE__ */ jsxs5(motion2.g, { animate: controls, initial: "normal", variants: PRIMARY_GROUP_VARIANTS, children: [
       /* @__PURE__ */ jsx10("path", { d: "m18 19 1-7-6 1" }),
       /* @__PURE__ */ jsx10("path", { d: "M8,5l5.5,3-2.4,3.5" }),
-      /* @__PURE__ */ jsx10(motion2.path, { animate: controls, d: "M8 5 L5 8", initial: "initial", variants: PATH_VARIANTS })
+      /* @__PURE__ */ jsx10(motion2.path, { animate: controls, d: "M8 5 L5 8", initial: "normal", variants: PATH_VARIANTS })
     ] }),
-    /* @__PURE__ */ jsxs5(motion2.g, { animate: controls, initial: "initial", variants: SECONDARY_GROUP_VARIANTS, children: [
+    /* @__PURE__ */ jsxs5(motion2.g, { animate: controls, initial: "normal", variants: SECONDARY_GROUP_VARIANTS, children: [
       /* @__PURE__ */ jsx10("path", { d: "M4.2,14.5c-.8,2.6.7,5.4,3.3,6.2,1.2.4,2.4.3,3.6-.2" }),
       /* @__PURE__ */ jsx10("path", { d: "M13.8,17.5c.8-2.6-.7-5.4-3.3-6.2-1.2-.4-2.4-.3-3.6.2" }),
       /* @__PURE__ */ jsx10("path", { d: "M13,13.1c-.5-.7-1.1-1.2-1.9-1.6" })
@@ -69436,7 +70392,6 @@ function IconSvg88({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/arrow-up-down.tsx
-import * as React5 from "react";
 import { jsx as jsx95, jsxs as jsxs85 } from "react/jsx-runtime";
 var animations2 = {
   default: {
@@ -69530,17 +70485,7 @@ var animations2 = {
 };
 function IconSvg89({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React5.useRef(controls);
-  current.current = controls;
-  React5.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs85(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs85(motion2.g, { variants: animations2.default.downArrowGroup, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx95(motion2.path, { d: "m21 16-4 4-4-4", variants: animations2.default.downArrowHead, initial: "initial", animate: controls }),
@@ -70051,7 +70996,6 @@ function IconSvg105({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/axis-3d.tsx
-import * as React6 from "react";
 import { jsx as jsx112, jsxs as jsxs101 } from "react/jsx-runtime";
 var pathAnimation = {
   initial: {
@@ -70085,17 +71029,7 @@ var animations3 = {
 };
 function IconSvg106({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React6.useRef(controls);
-  current.current = controls;
-  React6.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs101(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx112(motion2.path, { d: "M4 4v15a1 1 0 0 0 1 1h15", variants: animations3.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsxs101(motion2.g, { variants: animations3.default.group, initial: "initial", animate: controls, children: [
@@ -70238,7 +71172,6 @@ function IconSvg111({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/badge-check.tsx
-import * as React7 from "react";
 import { jsx as jsx118, jsxs as jsxs106 } from "react/jsx-runtime";
 var animations4 = {
   default: {
@@ -70281,17 +71214,7 @@ var animations4 = {
 };
 function IconSvg112({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React7.useRef(controls);
-  current.current = controls;
-  React7.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs106(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx118(motion2.path, { d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z", variants: animations4.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx118(motion2.path, { d: "m9 12 2 2 4-4", variants: animations4.default.path2, initial: "initial", animate: controls })
@@ -71633,7 +72556,6 @@ function IconSvg159({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/bell-off.tsx
-import * as React8 from "react";
 import { jsx as jsx166, jsxs as jsxs154 } from "react/jsx-runtime";
 var animations5 = {
   default: {
@@ -71670,17 +72592,7 @@ var animations5 = {
 };
 function IconSvg160({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React8.useRef(controls);
-  current.current = controls;
-  React8.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs154(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations5.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx166(motion2.path, { d: "M10.268 21a2 2 0 0 0 3.464 0", variants: animations5.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx166(motion2.path, { d: "M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742", variants: animations5.default.path2, initial: "initial", animate: controls }),
@@ -71718,7 +72630,6 @@ function IconSvg161({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/bell-ring.tsx
-import * as React9 from "react";
 import { jsx as jsx168, jsxs as jsxs156 } from "react/jsx-runtime";
 var animations6 = {
   default: {
@@ -71768,17 +72679,7 @@ var animations6 = {
 };
 function IconSvg162({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React9.useRef(controls);
-  current.current = controls;
-  React9.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs156(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations6.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx168(motion2.path, { d: "M10.268 21a2 2 0 0 0 3.464 0", variants: animations6.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx168(motion2.path, { d: "M22 8c0-2.3-.8-4.3-2-6", variants: animations6.default.path2, initial: "initial", animate: controls }),
@@ -71788,7 +72689,6 @@ function IconSvg162({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/between-horizontal-end.tsx
-import * as React10 from "react";
 import { jsx as jsx169, jsxs as jsxs157 } from "react/jsx-runtime";
 var animations7 = {
   default: {
@@ -71849,17 +72749,7 @@ var animations7 = {
 };
 function IconSvg163({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React10.useRef(controls);
-  current.current = controls;
-  React10.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs157(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx169(motion2.rect, { width: 13, height: 7, x: 3, y: 3, rx: 1, variants: animations7.default.topRect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx169(motion2.path, { d: "m22 15-3-3 3-3", variants: animations7.default.arrow, initial: "initial", animate: controls }),
@@ -71868,7 +72758,6 @@ function IconSvg163({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/between-horizontal-start.tsx
-import * as React11 from "react";
 import { jsx as jsx170, jsxs as jsxs158 } from "react/jsx-runtime";
 var animations8 = {
   default: {
@@ -71929,17 +72818,7 @@ var animations8 = {
 };
 function IconSvg164({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React11.useRef(controls);
-  current.current = controls;
-  React11.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs158(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx170(motion2.rect, { width: 13, height: 7, x: 8, y: 3, rx: 1, variants: animations8.default.topRect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx170(motion2.path, { d: "m2 9 3 3-3 3", variants: animations8.default.arrow, initial: "initial", animate: controls }),
@@ -71948,7 +72827,6 @@ function IconSvg164({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/between-vertical-end.tsx
-import * as React12 from "react";
 import { jsx as jsx171, jsxs as jsxs159 } from "react/jsx-runtime";
 var animations9 = {
   default: {
@@ -72009,17 +72887,7 @@ var animations9 = {
 };
 function IconSvg165({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React12.useRef(controls);
-  current.current = controls;
-  React12.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs159(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx171(motion2.rect, { width: 7, height: 13, x: 3, y: 3, rx: 1, variants: animations9.default.leftRect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx171(motion2.path, { d: "m9 22 3-3 3 3", variants: animations9.default.arrow, initial: "initial", animate: controls }),
@@ -72028,7 +72896,6 @@ function IconSvg165({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/between-vertical-start.tsx
-import * as React13 from "react";
 import { jsx as jsx172, jsxs as jsxs160 } from "react/jsx-runtime";
 var animations10 = {
   default: {
@@ -72089,17 +72956,7 @@ var animations10 = {
 };
 function IconSvg166({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React13.useRef(controls);
-  current.current = controls;
-  React13.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs160(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx172(motion2.rect, { width: 7, height: 13, x: 3, y: 8, rx: 1, variants: animations10.default.leftRect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx172(motion2.path, { d: "m15 2-3 3-3-3", variants: animations10.default.arrow, initial: "initial", animate: controls }),
@@ -72390,7 +73247,6 @@ function IconSvg174({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/blend.tsx
-import * as React14 from "react";
 import { jsx as jsx181, jsxs as jsxs168 } from "react/jsx-runtime";
 var animations11 = {
   default: {
@@ -72420,17 +73276,7 @@ var animations11 = {
 };
 function IconSvg175({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React14.useRef(controls);
-  current.current = controls;
-  React14.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs168(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx181(motion2.circle, { cx: "9", cy: "9", r: "7", variants: animations11.default.circle1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx181(motion2.circle, { cx: "15", cy: "15", r: "7", variants: animations11.default.circle2, initial: "initial", animate: controls })
@@ -73728,7 +74574,6 @@ function IconSvg219({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/bot-off.tsx
-import * as React15 from "react";
 import { jsx as jsx226, jsxs as jsxs209 } from "react/jsx-runtime";
 var animations12 = {
   default: {
@@ -73771,17 +74616,7 @@ var animations12 = {
 };
 function IconSvg220({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React15.useRef(controls);
-  current.current = controls;
-  React15.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs209(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations12.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx226(motion2.path, { d: "M13.67 8H18a2 2 0 0 1 2 2v4.33", variants: animations12.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx226(motion2.path, { d: "M2 14h2", variants: animations12.default.path2, initial: "initial", animate: controls }),
@@ -74352,7 +75187,6 @@ function IconSvg237({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/brush.tsx
-import * as React16 from "react";
 import { jsx as jsx244, jsxs as jsxs227 } from "react/jsx-runtime";
 var animations13 = {
   default: {
@@ -74374,17 +75208,7 @@ var animations13 = {
 };
 function IconSvg238({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React16.useRef(controls);
-  current.current = controls;
-  React16.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs227(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations13.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx244(motion2.path, { d: "m11 10 3 3", variants: animations13.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx244(motion2.path, { d: "M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z", variants: animations13.default.path2, initial: "initial", animate: controls }),
@@ -74393,7 +75217,6 @@ function IconSvg238({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/brush-cleaning.tsx
-import * as React17 from "react";
 import { jsx as jsx245, jsxs as jsxs228 } from "react/jsx-runtime";
 var animations14 = {
   default: {
@@ -74416,17 +75239,7 @@ var animations14 = {
 };
 function IconSvg239({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React17.useRef(controls);
-  current.current = controls;
-  React17.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs228(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations14.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx245(motion2.path, { d: "m16 22-1-4", variants: animations14.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx245(motion2.path, { d: "M19 13.99a1 1 0 0 0 1-1V12a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v.99a1 1 0 0 0 1 1", variants: animations14.default.path2, initial: "initial", animate: controls }),
@@ -76251,7 +77064,6 @@ function IconSvg298({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/chart-bar.tsx
-import * as React18 from "react";
 import { jsx as jsx305, jsxs as jsxs288 } from "react/jsx-runtime";
 var animations15 = {
   default: (() => {
@@ -76354,17 +77166,7 @@ var animations15 = {
 };
 function IconSvg299({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React18.useRef(controls);
-  current.current = controls;
-  React18.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs288(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx305(motion2.path, { d: "M7 6h3", variants: animations15.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx305(motion2.path, { d: "M7 11h12", variants: animations15.default.path2, initial: "initial", animate: controls }),
@@ -76495,7 +77297,6 @@ function IconSvg304({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/chart-column.tsx
-import * as React19 from "react";
 import { jsx as jsx311, jsxs as jsxs294 } from "react/jsx-runtime";
 var animations16 = {
   default: (() => {
@@ -76598,17 +77399,7 @@ var animations16 = {
 };
 function IconSvg305({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React19.useRef(controls);
-  current.current = controls;
-  React19.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs294(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx311(motion2.path, { d: "M8 17V13", variants: animations16.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx311(motion2.path, { d: "M13 17V5", variants: animations16.default.path2, initial: "initial", animate: controls }),
@@ -76793,7 +77584,6 @@ function IconSvg312({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/chart-no-axes-column.tsx
-import * as React20 from "react";
 import { jsx as jsx319, jsxs as jsxs302 } from "react/jsx-runtime";
 var animations17 = {
   default: (() => {
@@ -76894,17 +77684,7 @@ var animations17 = {
 };
 function IconSvg313({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React20.useRef(controls);
-  current.current = controls;
-  React20.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs302(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx319(motion2.path, { d: "M5 21V15", variants: animations17.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx319(motion2.path, { d: "M12 21V3", variants: animations17.default.path2, initial: "initial", animate: controls }),
@@ -77140,7 +77920,6 @@ function IconSvg322({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/check-line.tsx
-import * as React21 from "react";
 import { jsx as jsx329, jsxs as jsxs311 } from "react/jsx-runtime";
 var animations18 = {
   default: {
@@ -77165,17 +77944,7 @@ var animations18 = {
 };
 function IconSvg323({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React21.useRef(controls);
-  current.current = controls;
-  React21.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs311(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx329(motion2.path, { d: "m4 10 5 5L20 4", variants: animations18.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx329(motion2.path, { d: "M21,19H3", variants: animations18.default.path2, initial: "initial", animate: controls })
@@ -77209,7 +77978,6 @@ function IconSvg324({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cherry.tsx
-import * as React22 from "react";
 import { jsx as jsx331, jsxs as jsxs313 } from "react/jsx-runtime";
 var animations19 = {
   default: {
@@ -77234,17 +78002,7 @@ var animations19 = {
 };
 function IconSvg325({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React22.useRef(controls);
-  current.current = controls;
-  React22.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs313(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations19.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx331(motion2.path, { d: "M2 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z", variants: animations19.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx331(motion2.path, { d: "M12 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z", variants: animations19.default.path2, initial: "initial", animate: controls }),
@@ -78897,7 +79655,6 @@ function IconSvg385({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/circle-plus.tsx
-import * as React23 from "react";
 import { jsx as jsx392, jsxs as jsxs368 } from "react/jsx-runtime";
 var animations20 = {
   default: {
@@ -78926,17 +79683,7 @@ var animations20 = {
 };
 function IconSvg386({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React23.useRef(controls);
-  current.current = controls;
-  React23.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs368(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx392(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations20.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx392(motion2.line, { x1: 8, y1: 12, x2: 16, y2: 12, variants: animations20.default.line1, initial: "initial", animate: controls }),
@@ -79181,7 +79928,6 @@ function IconSvg395({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/circle-x.tsx
-import * as React24 from "react";
 import { jsx as jsx402, jsxs as jsxs377 } from "react/jsx-runtime";
 var animations21 = {
   default: {
@@ -79210,17 +79956,7 @@ var animations21 = {
 };
 function IconSvg396({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React24.useRef(controls);
-  current.current = controls;
-  React24.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs377(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx402(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations21.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx402(motion2.line, { x1: 9, y1: 15, x2: 15, y2: 9, variants: animations21.default.line1, initial: "initial", animate: controls }),
@@ -79229,7 +79965,6 @@ function IconSvg396({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/circuit-board.tsx
-import * as React25 from "react";
 import { jsx as jsx403, jsxs as jsxs378 } from "react/jsx-runtime";
 var animations22 = {
   default: {
@@ -79263,17 +79998,7 @@ var animations22 = {
 };
 function IconSvg397({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React25.useRef(controls);
-  current.current = controls;
-  React25.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs378(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx403(motion2.rect, { width: "18", height: "18", x: "3", y: "3", rx: "2", variants: animations22.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx403(motion2.path, { d: "M11 9h4a2 2 0 0 0 2-2V3", variants: animations22.default.path1, initial: "initial", animate: controls }),
@@ -79357,7 +80082,6 @@ function IconSvg399({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clapperboard.tsx
-import * as React26 from "react";
 import { jsx as jsx406, jsxs as jsxs381 } from "react/jsx-runtime";
 var animations23 = {
   default: {
@@ -79396,17 +80120,7 @@ var animations23 = {
 };
 function IconSvg400({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React26.useRef(controls);
-  current.current = controls;
-  React26.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx406(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: /* @__PURE__ */ jsxs381(motion2.g, { variants: animations23.default.group1, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsxs381(motion2.g, { variants: animations23.default.group2, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx406(motion2.path, { d: "M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z", variants: animations23.default.path1, initial: "initial", animate: controls }),
@@ -79418,7 +80132,6 @@ function IconSvg400({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clipboard.tsx
-import * as React27 from "react";
 import { jsx as jsx407, jsxs as jsxs382 } from "react/jsx-runtime";
 var animations24 = {
   default: {
@@ -79467,17 +80180,7 @@ var animations24 = {
 };
 function IconSvg401({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React27.useRef(controls);
-  current.current = controls;
-  React27.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs382(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx407(motion2.rect, { width: "8", height: "4", x: "8", y: "2", rx: "1", ry: "1", variants: animations24.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx407(motion2.path, { d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", variants: animations24.default.path1, initial: "initial", animate: controls }),
@@ -79573,7 +80276,6 @@ function IconSvg404({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clipboard-list.tsx
-import * as React28 from "react";
 import { jsx as jsx411, jsxs as jsxs386 } from "react/jsx-runtime";
 var animations25 = {
   default: {
@@ -79650,17 +80352,7 @@ var animations25 = {
 };
 function IconSvg405({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React28.useRef(controls);
-  current.current = controls;
-  React28.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs386(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx411(motion2.rect, { width: "8", height: "4", x: "8", y: "2", rx: "1", ry: "1", variants: animations25.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx411(motion2.path, { d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", variants: animations25.default.path1, initial: "initial", animate: controls }),
@@ -79914,7 +80606,6 @@ function IconSvg413({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-1.tsx
-import * as React29 from "react";
 import { jsx as jsx420, jsxs as jsxs395 } from "react/jsx-runtime";
 var animations26 = {
   default: {
@@ -79945,17 +80636,7 @@ var animations26 = {
 };
 function IconSvg414({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React29.useRef(controls);
-  current.current = controls;
-  React29.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs395(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx420(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations26.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx420(motion2.line, { x1: 14.5, y1: 8, x2: 12, y2: 12, variants: animations26.default.line1, initial: "initial", animate: controls }),
@@ -79964,7 +80645,6 @@ function IconSvg414({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-10.tsx
-import * as React30 from "react";
 import { jsx as jsx421, jsxs as jsxs396 } from "react/jsx-runtime";
 var animations27 = {
   default: {
@@ -79995,17 +80675,7 @@ var animations27 = {
 };
 function IconSvg415({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React30.useRef(controls);
-  current.current = controls;
-  React30.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs396(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx421(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations27.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx421(motion2.line, { x1: 8, y1: 10, x2: 12, y2: 12, variants: animations27.default.line1, initial: "initial", animate: controls }),
@@ -80014,7 +80684,6 @@ function IconSvg415({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-11.tsx
-import * as React31 from "react";
 import { jsx as jsx422, jsxs as jsxs397 } from "react/jsx-runtime";
 var animations28 = {
   default: {
@@ -80045,17 +80714,7 @@ var animations28 = {
 };
 function IconSvg416({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React31.useRef(controls);
-  current.current = controls;
-  React31.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs397(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx422(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations28.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx422(motion2.line, { x1: 9.5, y1: 8, x2: 12, y2: 12, variants: animations28.default.line1, initial: "initial", animate: controls }),
@@ -80064,7 +80723,6 @@ function IconSvg416({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-12.tsx
-import * as React32 from "react";
 import { jsx as jsx423, jsxs as jsxs398 } from "react/jsx-runtime";
 var animations29 = {
   default: {
@@ -80095,17 +80753,7 @@ var animations29 = {
 };
 function IconSvg417({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React32.useRef(controls);
-  current.current = controls;
-  React32.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs398(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx423(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations29.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx423(motion2.line, { x1: 12, y1: 7.5, x2: 12, y2: 12, variants: animations29.default.line1, initial: "initial", animate: controls }),
@@ -80114,7 +80762,6 @@ function IconSvg417({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-2.tsx
-import * as React33 from "react";
 import { jsx as jsx424, jsxs as jsxs399 } from "react/jsx-runtime";
 var animations30 = {
   default: {
@@ -80145,17 +80792,7 @@ var animations30 = {
 };
 function IconSvg418({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React33.useRef(controls);
-  current.current = controls;
-  React33.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs399(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx424(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations30.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx424(motion2.line, { x1: 16, y1: 10, x2: 12, y2: 12, variants: animations30.default.line1, initial: "initial", animate: controls }),
@@ -80164,7 +80801,6 @@ function IconSvg418({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-3.tsx
-import * as React34 from "react";
 import { jsx as jsx425, jsxs as jsxs400 } from "react/jsx-runtime";
 var animations31 = {
   default: {
@@ -80195,17 +80831,7 @@ var animations31 = {
 };
 function IconSvg419({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React34.useRef(controls);
-  current.current = controls;
-  React34.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs400(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx425(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations31.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx425(motion2.line, { x1: 16.5, y1: 12, x2: 12, y2: 12, variants: animations31.default.line1, initial: "initial", animate: controls }),
@@ -80214,7 +80840,6 @@ function IconSvg419({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-4.tsx
-import * as React35 from "react";
 import { jsx as jsx426, jsxs as jsxs401 } from "react/jsx-runtime";
 var animations32 = {
   default: {
@@ -80245,17 +80870,7 @@ var animations32 = {
 };
 function IconSvg420({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React35.useRef(controls);
-  current.current = controls;
-  React35.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs401(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx426(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations32.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx426(motion2.line, { x1: 12, y1: 12, x2: 16, y2: 14, variants: animations32.default.line1, initial: "initial", animate: controls }),
@@ -80264,7 +80879,6 @@ function IconSvg420({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-5.tsx
-import * as React36 from "react";
 import { jsx as jsx427, jsxs as jsxs402 } from "react/jsx-runtime";
 var animations33 = {
   default: {
@@ -80295,17 +80909,7 @@ var animations33 = {
 };
 function IconSvg421({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React36.useRef(controls);
-  current.current = controls;
-  React36.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs402(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx427(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations33.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx427(motion2.line, { x1: 14.5, y1: 16, x2: 12, y2: 12, variants: animations33.default.line1, initial: "initial", animate: controls }),
@@ -80314,7 +80918,6 @@ function IconSvg421({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-6.tsx
-import * as React37 from "react";
 import { jsx as jsx428, jsxs as jsxs403 } from "react/jsx-runtime";
 var animations34 = {
   default: {
@@ -80345,17 +80948,7 @@ var animations34 = {
 };
 function IconSvg422({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React37.useRef(controls);
-  current.current = controls;
-  React37.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs403(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx428(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations34.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx428(motion2.line, { x1: 12, y1: 16.5, x2: 12, y2: 12, variants: animations34.default.line1, initial: "initial", animate: controls }),
@@ -80364,7 +80957,6 @@ function IconSvg422({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-7.tsx
-import * as React38 from "react";
 import { jsx as jsx429, jsxs as jsxs404 } from "react/jsx-runtime";
 var animations35 = {
   default: {
@@ -80395,17 +80987,7 @@ var animations35 = {
 };
 function IconSvg423({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React38.useRef(controls);
-  current.current = controls;
-  React38.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs404(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx429(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations35.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx429(motion2.line, { x1: 9.5, y1: 16, x2: 12, y2: 12, variants: animations35.default.line1, initial: "initial", animate: controls }),
@@ -80414,7 +80996,6 @@ function IconSvg423({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-8.tsx
-import * as React39 from "react";
 import { jsx as jsx430, jsxs as jsxs405 } from "react/jsx-runtime";
 var animations36 = {
   default: {
@@ -80445,17 +81026,7 @@ var animations36 = {
 };
 function IconSvg424({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React39.useRef(controls);
-  current.current = controls;
-  React39.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs405(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx430(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations36.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx430(motion2.line, { x1: 8, y1: 14, x2: 12, y2: 12, variants: animations36.default.line1, initial: "initial", animate: controls }),
@@ -80464,7 +81035,6 @@ function IconSvg424({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/clock-9.tsx
-import * as React40 from "react";
 import { jsx as jsx431, jsxs as jsxs406 } from "react/jsx-runtime";
 var animations37 = {
   default: {
@@ -80495,17 +81065,7 @@ var animations37 = {
 };
 function IconSvg425({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React40.useRef(controls);
-  current.current = controls;
-  React40.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs406(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx431(motion2.circle, { cx: 12, cy: 12, r: 10, variants: animations37.default.circle, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx431(motion2.line, { x1: 7.5, y1: 12, x2: 12, y2: 12, variants: animations37.default.line1, initial: "initial", animate: controls }),
@@ -80854,7 +81414,6 @@ function IconSvg438({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cloud-drizzle.tsx
-import * as React41 from "react";
 import { jsx as jsx445, jsxs as jsxs419 } from "react/jsx-runtime";
 var drizzleAnimation = {
   initial: { opacity: 1 },
@@ -80885,17 +81444,7 @@ var animations38 = {
 };
 function IconSvg439({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React41.useRef(controls);
-  current.current = controls;
-  React41.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs419(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx445(motion2.path, { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", variants: animations38.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsxs419(motion2.g, { variants: animations38.default.group, initial: "initial", animate: controls, children: [
@@ -80937,7 +81486,6 @@ function IconSvg440({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cloud-hail.tsx
-import * as React42 from "react";
 import { jsx as jsx447, jsxs as jsxs421 } from "react/jsx-runtime";
 var hailAnimation = {
   initial: { opacity: 1 },
@@ -80968,17 +81516,7 @@ var animations39 = {
 };
 function IconSvg441({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React42.useRef(controls);
-  current.current = controls;
-  React42.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs421(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx447(motion2.path, { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", variants: animations39.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsxs421(motion2.g, { variants: animations39.default.group, initial: "initial", animate: controls, children: [
@@ -81014,7 +81552,6 @@ function IconSvg442({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cloud-moon.tsx
-import * as React43 from "react";
 import { jsx as jsx449, jsxs as jsxs423 } from "react/jsx-runtime";
 var animations40 = {
   default: {
@@ -81048,17 +81585,7 @@ var animations40 = {
 };
 function IconSvg443({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React43.useRef(controls);
-  current.current = controls;
-  React43.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs423(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx449(motion2.path, { d: "M13 16a3 3 0 0 1 0 6H7a5 5 0 1 1 4.9-6z", variants: animations40.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx449(motion2.path, { d: "M18.376 14.512a6 6 0 0 0 3.461-4.127c.148-.625-.659-.97-1.248-.714a4 4 0 0 1-5.259-5.26c.255-.589-.09-1.395-.716-1.248a6 6 0 0 0-4.594 5.36", variants: animations40.default.path2, initial: "initial", animate: controls })
@@ -81066,7 +81593,6 @@ function IconSvg443({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cloud-moon-rain.tsx
-import * as React44 from "react";
 import { jsx as jsx450, jsxs as jsxs424 } from "react/jsx-runtime";
 var rainAnimation = {
   initial: {
@@ -81098,17 +81624,7 @@ var animations41 = {
 };
 function IconSvg444({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React44.useRef(controls);
-  current.current = controls;
-  React44.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs424(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx450(motion2.path, { d: "M18.376 14.512a6 6 0 0 0 3.461-4.127c.148-.625-.659-.97-1.248-.714a4 4 0 0 1-5.259-5.26c.255-.589-.09-1.395-.716-1.248a6 6 0 0 0-4.594 5.36", variants: animations41.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx450(motion2.path, { d: "M3 20a5 5 0 1 1 8.9-4H13a3 3 0 0 1 2 5.24", variants: animations41.default.path2, initial: "initial", animate: controls }),
@@ -81295,7 +81811,6 @@ function IconSvg449({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cloud-sun-rain.tsx
-import * as React45 from "react";
 import { jsx as jsx456, jsxs as jsxs430 } from "react/jsx-runtime";
 var rainAnimation2 = {
   initial: {
@@ -81344,17 +81859,7 @@ var animations42 = {
 };
 function IconSvg450({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React45.useRef(controls);
-  current.current = controls;
-  React45.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs430(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx456(motion2.path, { d: "M15.947 12.65a4 4 0 0 0-5.925-4.128", variants: animations42.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx456(motion2.path, { d: "M3 20a5 5 0 1 1 8.9-4H13a3 3 0 0 1 2 5.24", variants: animations42.default.path2, initial: "initial", animate: controls }),
@@ -82690,7 +83195,6 @@ function IconSvg498({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/crop.tsx
-import * as React46 from "react";
 import { jsx as jsx505, jsxs as jsxs478 } from "react/jsx-runtime";
 var animations43 = {
   default: {
@@ -82734,17 +83238,7 @@ var animations43 = {
 };
 function IconSvg499({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React46.useRef(controls);
-  current.current = controls;
-  React46.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs478(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx505(motion2.path, { d: "M6 2v14a2 2 0 0 0 2 2h14", variants: animations43.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx505(motion2.path, { d: "M18 22V8a2 2 0 0 0-2-2H2", variants: animations43.default.path2, initial: "initial", animate: controls })
@@ -82752,7 +83246,6 @@ function IconSvg499({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/cross.tsx
-import * as React47 from "react";
 import { jsx as jsx506 } from "react/jsx-runtime";
 var animations44 = {
   default: {
@@ -82784,17 +83277,7 @@ var animations44 = {
 };
 function IconSvg500({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React47.useRef(controls);
-  current.current = controls;
-  React47.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx506(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations44.default.group, initial: "initial", animate: controls, children: /* @__PURE__ */ jsx506(motion2.path, { d: "M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z", variants: animations44.default.path, initial: "initial", animate: controls }) });
 }
 
@@ -84739,7 +85222,6 @@ function IconSvg565({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/ellipsis.tsx
-import * as React48 from "react";
 import { jsx as jsx572, jsxs as jsxs539 } from "react/jsx-runtime";
 var animations45 = {
   default: {
@@ -84863,17 +85345,7 @@ var animations45 = {
 };
 function IconSvg566({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React48.useRef(controls);
-  current.current = controls;
-  React48.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs539(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations45.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx572(motion2.circle, { cx: 19, cy: 12, r: 1, variants: animations45.default.circle1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx572(motion2.circle, { cx: 12, cy: 12, r: 1, variants: animations45.default.circle2, initial: "initial", animate: controls }),
@@ -84882,7 +85354,6 @@ function IconSvg566({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/ellipsis-vertical.tsx
-import * as React49 from "react";
 import { jsx as jsx573, jsxs as jsxs540 } from "react/jsx-runtime";
 var animations46 = {
   default: {
@@ -84959,17 +85430,7 @@ var animations46 = {
 };
 function IconSvg567({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React49.useRef(controls);
-  current.current = controls;
-  React49.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs540(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations46.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx573(motion2.circle, { cx: 12, cy: 19, r: 1, variants: animations46.default.circle1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx573(motion2.circle, { cx: 12, cy: 12, r: 1, variants: animations46.default.circle2, initial: "initial", animate: controls }),
@@ -85030,7 +85491,6 @@ function IconSvg569({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/equal-not.tsx
-import * as React50 from "react";
 import { jsx as jsx576, jsxs as jsxs543 } from "react/jsx-runtime";
 var animations47 = {
   default: {
@@ -85086,17 +85546,7 @@ var animations47 = {
 };
 function IconSvg570({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React50.useRef(controls);
-  current.current = controls;
-  React50.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs543(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx576(motion2.line, { x1: "5", x2: "19", y1: "9", y2: "9", variants: animations47.default.line1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx576(motion2.line, { x1: "5", x2: "19", y1: "15", y2: "15", variants: animations47.default.line2, initial: "initial", animate: controls }),
@@ -88782,7 +89232,6 @@ function IconSvg699({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/forklift.tsx
-import * as React51 from "react";
 import { jsx as jsx706, jsxs as jsxs665 } from "react/jsx-runtime";
 var animations48 = {
   default: {
@@ -88828,17 +89277,7 @@ var animations48 = {
 };
 function IconSvg700({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React51.useRef(controls);
-  current.current = controls;
-  React51.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs665(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx706(motion2.path, { d: "M12,12h-7c-1.1,0-2,.9-2,2v5", variants: animations48.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx706(motion2.circle, { cx: 13, cy: 19, r: 2, variants: animations48.default.circle1, initial: "initial", animate: controls }),
@@ -89166,7 +89605,6 @@ function IconSvg709({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/gallery-horizontal.tsx
-import * as React52 from "react";
 import { jsx as jsx716, jsxs as jsxs674 } from "react/jsx-runtime";
 var animations49 = {
   default: (() => {
@@ -89279,17 +89717,7 @@ var animations49 = {
 };
 function IconSvg710({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React52.useRef(controls);
-  current.current = controls;
-  React52.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs674(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx716(motion2.path, { d: "M2 3v18", variants: animations49.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx716(motion2.rect, { width: "12", height: "18", x: "6", y: "3", rx: "2", variants: animations49.default.rect, initial: "initial", animate: controls }),
@@ -89349,7 +89777,6 @@ function IconSvg712({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/gallery-vertical.tsx
-import * as React53 from "react";
 import { jsx as jsx719, jsxs as jsxs677 } from "react/jsx-runtime";
 var animations50 = {
   default: (() => {
@@ -89462,17 +89889,7 @@ var animations50 = {
 };
 function IconSvg713({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React53.useRef(controls);
-  current.current = controls;
-  React53.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs677(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx719(motion2.path, { d: "M3 2h18", variants: animations50.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx719(motion2.rect, { width: "18", height: "12", x: "3", y: "6", rx: "2", variants: animations50.default.rect, initial: "initial", animate: controls }),
@@ -92969,7 +93386,6 @@ function IconSvg816({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/house-wifi.tsx
-import * as React54 from "react";
 import { jsx as jsx823, jsxs as jsxs773 } from "react/jsx-runtime";
 var animations51 = {
   default: (() => {
@@ -93008,17 +93424,7 @@ var animations51 = {
 };
 function IconSvg817({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React54.useRef(controls);
-  current.current = controls;
-  React54.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs773(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx823(motion2.path, { d: "M12 17h.01", variants: animations51.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx823(motion2.path, { d: "M9.5 13.866a4 4 0 0 1 5 .01", variants: animations51.default.path2, initial: "initial", animate: controls }),
@@ -93821,7 +94227,6 @@ function IconSvg842({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/kanban.tsx
-import * as React55 from "react";
 import { jsx as jsx849, jsxs as jsxs798 } from "react/jsx-runtime";
 var animations52 = {
   default: {
@@ -93856,17 +94261,7 @@ var animations52 = {
 };
 function IconSvg843({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React55.useRef(controls);
-  current.current = controls;
-  React55.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs798(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx849(motion2.line, { x1: 18, y1: 5, x2: 18, y2: 19, variants: animations52.default.line1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx849(motion2.line, { x1: 12, y1: 5, x2: 12, y2: 11, variants: animations52.default.line2, initial: "initial", animate: controls }),
@@ -93975,7 +94370,6 @@ function IconSvg847({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/keyboard.tsx
-import * as React56 from "react";
 import { jsx as jsx854, jsxs as jsxs803 } from "react/jsx-runtime";
 var KEYBOARD_PATHS = [
   { id: "key1", d: "M10 8h.01" },
@@ -93989,23 +94383,10 @@ var KEYBOARD_PATHS = [
 ];
 function IconSvg848({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React56.useRef(controls);
-  current.current = controls;
-  React56.useLayoutEffect(() => {
-    register({
-      async play() {
-        await current.current.start((i) => ({ opacity: [1, 0.2, 1], transition: { duration: 1.5, times: [0, 0.5, 1], delay: i * 0.2 * Math.random(), repeat: 1, repeatType: "reverse" } }));
-      },
-      reset() {
-        current.current.stop();
-        current.current.set({ opacity: 1 });
-      }
-    });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs803("svg", { style: { color: color2 }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
     /* @__PURE__ */ jsx854("rect", { height: "16", rx: "2", width: "20", x: "2", y: "4" }),
-    /* @__PURE__ */ jsx854(AnimatePresence, { children: KEYBOARD_PATHS.map((path, index) => /* @__PURE__ */ jsx854(motion2.path, { animate: controls, custom: index, d: path.d, initial: { opacity: 1 } }, path.id)) })
+    /* @__PURE__ */ jsx854(AnimatePresence, { children: KEYBOARD_PATHS.map((path, index) => /* @__PURE__ */ jsx854(motion2.path, { animate: controls, custom: index, d: path.d, initial: "initial", variants: { initial: { opacity: 1 }, animate: (i) => ({ opacity: [1, 0.2, 1], transition: { duration: 1.5, times: [0, 0.5, 1], delay: i * 0.2 * Math.random(), repeat: 1, repeatType: "reverse" } }) } }, path.id)) })
   ] });
 }
 
@@ -94575,7 +94956,6 @@ function IconSvg866({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/layers-2.tsx
-import * as React57 from "react";
 import { jsx as jsx873, jsxs as jsxs822 } from "react/jsx-runtime";
 var animations53 = {
   default: {
@@ -94633,17 +95013,7 @@ var animations53 = {
 };
 function IconSvg867({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React57.useRef(controls);
-  current.current = controls;
-  React57.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs822(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx873(motion2.path, { d: "M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z", variants: animations53.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx873(motion2.path, { d: "m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845", variants: animations53.default.path2, initial: "initial", animate: controls })
@@ -94680,7 +95050,6 @@ function IconSvg868({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/layout-dashboard.tsx
-import * as React58 from "react";
 import { jsx as jsx875, jsxs as jsxs824 } from "react/jsx-runtime";
 var animations54 = {
   default: {
@@ -94774,17 +95143,7 @@ var animations54 = {
 };
 function IconSvg869({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React58.useRef(controls);
-  current.current = controls;
-  React58.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs824(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx875(motion2.rect, { width: 7, height: 9, x: 3, y: 3, rx: 1, ry: 1, variants: animations54.default.rect1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx875(motion2.rect, { width: 7, height: 5, x: 14, y: 3, rx: 1, ry: 1, variants: animations54.default.rect2, initial: "initial", animate: controls }),
@@ -95208,7 +95567,6 @@ function IconSvg883({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/lightbulb.tsx
-import * as React59 from "react";
 import { jsx as jsx890, jsxs as jsxs837 } from "react/jsx-runtime";
 var animations55 = {
   default: {
@@ -95258,17 +95616,7 @@ var animations55 = {
 };
 function IconSvg884({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React59.useRef(controls);
-  current.current = controls;
-  React59.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs837(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx890(motion2.path, { d: "M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5", variants: animations55.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx890(motion2.path, { d: "M9 18h6", variants: animations55.default.path2, initial: "initial", animate: controls }),
@@ -95277,7 +95625,6 @@ function IconSvg884({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/lightbulb-off.tsx
-import * as React60 from "react";
 import { jsx as jsx891, jsxs as jsxs838 } from "react/jsx-runtime";
 var animations56 = {
   default: {
@@ -95316,17 +95663,7 @@ var animations56 = {
 };
 function IconSvg885({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React60.useRef(controls);
-  current.current = controls;
-  React60.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs838(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations56.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx891(motion2.path, { d: "M16.8 11.2c.8-.9 1.2-2 1.2-3.2a6 6 0 0 0-9.3-5", variants: animations56.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx891(motion2.path, { d: "m2 2 20 20", variants: animations56.default.path2, initial: "initial", animate: controls }),
@@ -97985,7 +98322,6 @@ function IconSvg969({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-circle-code.tsx
-import * as React61 from "react";
 import { jsx as jsx976, jsxs as jsxs920 } from "react/jsx-runtime";
 var animations57 = {
   default: {
@@ -98032,17 +98368,7 @@ var animations57 = {
 };
 function IconSvg970({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React61.useRef(controls);
-  current.current = controls;
-  React61.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx976(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs920(motion2.g, { variants: animations57.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx976(motion2.path, { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", variants: animations57.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx976(motion2.path, { d: "M10 9.5 8 12l2 2.5", variants: animations57.default.path2, initial: "initial", animate: controls }),
@@ -98075,7 +98401,6 @@ function IconSvg971({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-circle-heart.tsx
-import * as React62 from "react";
 import { jsx as jsx978, jsxs as jsxs921 } from "react/jsx-runtime";
 var animations58 = {
   default: {
@@ -98110,17 +98435,7 @@ var animations58 = {
 };
 function IconSvg972({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React62.useRef(controls);
-  current.current = controls;
-  React62.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx978(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs921(motion2.g, { variants: animations58.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx978(motion2.path, { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", variants: animations58.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx978(motion2.path, { d: "M15.8 9.2a2.5 2.5 0 0 0-3.5 0l-.3.4-.35-.3a2.42 2.42 0 1 0-3.2 3.6l3.6 3.5 3.6-3.5c1.2-1.2 1.1-2.7.2-3.7", variants: animations58.default.path2, initial: "initial", animate: controls })
@@ -98164,7 +98479,6 @@ function IconSvg973({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-circle-off.tsx
-import * as React63 from "react";
 import { jsx as jsx980, jsxs as jsxs923 } from "react/jsx-runtime";
 var animations59 = {
   default: {
@@ -98199,17 +98513,7 @@ var animations59 = {
 };
 function IconSvg974({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React63.useRef(controls);
-  current.current = controls;
-  React63.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs923(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations59.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx980(motion2.path, { d: "M20.5 14.9A9 9 0 0 0 9.1 3.5", variants: animations59.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx980(motion2.path, { d: "m2 2 20 20", variants: animations59.default.path2, initial: "initial", animate: controls }),
@@ -98264,7 +98568,6 @@ function IconSvg975({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-circle-question.tsx
-import * as React64 from "react";
 import { jsx as jsx982, jsxs as jsxs925 } from "react/jsx-runtime";
 var animations60 = {
   default: {
@@ -98301,17 +98604,7 @@ var animations60 = {
 };
 function IconSvg976({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React64.useRef(controls);
-  current.current = controls;
-  React64.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx982(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs925(motion2.g, { variants: animations60.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx982(motion2.path, { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", variants: animations60.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx982(motion2.path, { d: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3", variants: animations60.default.path2, initial: "initial", animate: controls }),
@@ -98347,7 +98640,6 @@ function IconSvg977({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-circle-warning.tsx
-import * as React65 from "react";
 import { jsx as jsx984, jsxs as jsxs927 } from "react/jsx-runtime";
 var animations61 = {
   default: {
@@ -98384,17 +98676,7 @@ var animations61 = {
 };
 function IconSvg978({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React65.useRef(controls);
-  current.current = controls;
-  React65.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx984(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs927(motion2.g, { variants: animations61.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx984(motion2.path, { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", variants: animations61.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx984(motion2.path, { d: "M12 8v4", variants: animations61.default.path2, initial: "initial", animate: controls }),
@@ -98507,7 +98789,6 @@ function IconSvg981({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-code.tsx
-import * as React66 from "react";
 import { jsx as jsx988, jsxs as jsxs930 } from "react/jsx-runtime";
 var animations62 = {
   default: {
@@ -98554,17 +98835,7 @@ var animations62 = {
 };
 function IconSvg982({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React66.useRef(controls);
-  current.current = controls;
-  React66.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx988(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs930(motion2.g, { variants: animations62.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx988(motion2.path, { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", variants: animations62.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx988(motion2.path, { d: "M10 7.5 8 10l2 2.5", variants: animations62.default.path2, initial: "initial", animate: controls }),
@@ -98598,7 +98869,6 @@ function IconSvg983({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-diff.tsx
-import * as React67 from "react";
 import { jsx as jsx990, jsxs as jsxs931 } from "react/jsx-runtime";
 var animations63 = {
   default: {
@@ -98658,17 +98928,7 @@ var animations63 = {
 };
 function IconSvg984({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React67.useRef(controls);
-  current.current = controls;
-  React67.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx990(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs931(motion2.g, { variants: animations63.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx990(motion2.path, { d: "m5 19-2 2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2", variants: animations63.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx990(motion2.path, { d: "M12 7v6", variants: animations63.default.path2, initial: "initial", animate: controls }),
@@ -98678,7 +98938,6 @@ function IconSvg984({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-dot.tsx
-import * as React68 from "react";
 import { jsx as jsx991, jsxs as jsxs932 } from "react/jsx-runtime";
 var animations64 = {
   default: {
@@ -98715,17 +98974,7 @@ var animations64 = {
 };
 function IconSvg985({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React68.useRef(controls);
-  current.current = controls;
-  React68.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx991(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs932(motion2.g, { variants: animations64.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx991(motion2.path, { d: "M11.7 3H5a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2v-2.7", variants: animations64.default.path, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx991(motion2.circle, { cx: "18", cy: "6", r: "3", variants: animations64.default.circle, initial: "initial", animate: controls })
@@ -98733,7 +98982,6 @@ function IconSvg985({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-heart.tsx
-import * as React69 from "react";
 import { jsx as jsx992, jsxs as jsxs933 } from "react/jsx-runtime";
 var animations65 = {
   default: {
@@ -98768,17 +99016,7 @@ var animations65 = {
 };
 function IconSvg986({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React69.useRef(controls);
-  current.current = controls;
-  React69.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx992(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs933(motion2.g, { variants: animations65.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx992(motion2.path, { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", variants: animations65.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx992(motion2.path, { d: "M14.8 7.5a1.84 1.84 0 0 0-2.6 0l-.2.3-.3-.3a1.84 1.84 0 1 0-2.4 2.8L12 13l2.7-2.7c.9-.9.8-2.1.1-2.8", variants: animations65.default.path2, initial: "initial", animate: controls })
@@ -98849,7 +99087,6 @@ function IconSvg988({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-off.tsx
-import * as React70 from "react";
 import { jsx as jsx995, jsxs as jsxs936 } from "react/jsx-runtime";
 var animations66 = {
   default: {
@@ -98884,17 +99121,7 @@ var animations66 = {
 };
 function IconSvg989({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React70.useRef(controls);
-  current.current = controls;
-  React70.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs936(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations66.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx995(motion2.path, { d: "M21 15V5a2 2 0 0 0-2-2H9", variants: animations66.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx995(motion2.path, { d: "m2 2 20 20", variants: animations66.default.path2, initial: "initial", animate: controls }),
@@ -98949,7 +99176,6 @@ function IconSvg990({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-quote.tsx
-import * as React71 from "react";
 import { jsx as jsx997, jsxs as jsxs938 } from "react/jsx-runtime";
 var animations67 = {
   default: {
@@ -98994,17 +99220,7 @@ var animations67 = {
 };
 function IconSvg991({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React71.useRef(controls);
-  current.current = controls;
-  React71.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx997(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs938(motion2.g, { variants: animations67.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx997(motion2.path, { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", variants: animations67.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx997(motion2.path, { d: "M8 12a2 2 0 0 0 2-2V8H8", variants: animations67.default.path2, initial: "initial", animate: controls }),
@@ -99040,7 +99256,6 @@ function IconSvg992({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-share.tsx
-import * as React72 from "react";
 import { jsx as jsx999, jsxs as jsxs940 } from "react/jsx-runtime";
 var animations68 = {
   default: {
@@ -99101,17 +99316,7 @@ var animations68 = {
 };
 function IconSvg993({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React72.useRef(controls);
-  current.current = controls;
-  React72.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx999(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs940(motion2.g, { variants: animations68.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx999(motion2.path, { d: "M21 12v3a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h7", variants: animations68.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsxs940(motion2.g, { variants: animations68.default.group2, initial: "initial", animate: controls, children: [
@@ -99122,7 +99327,6 @@ function IconSvg993({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-text.tsx
-import * as React73 from "react";
 import { jsx as jsx1000, jsxs as jsxs941 } from "react/jsx-runtime";
 var animations69 = {
   default: {
@@ -99217,17 +99421,7 @@ var animations69 = {
 };
 function IconSvg994({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React73.useRef(controls);
-  current.current = controls;
-  React73.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1000(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs941(motion2.g, { variants: animations69.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1000(motion2.path, { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", variants: animations69.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1000(motion2.path, { d: "M13 8H7", variants: animations69.default.path2, initial: "initial", animate: controls }),
@@ -99236,7 +99430,6 @@ function IconSvg994({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/message-square-warning.tsx
-import * as React74 from "react";
 import { jsx as jsx1001, jsxs as jsxs942 } from "react/jsx-runtime";
 var animations70 = {
   default: {
@@ -99273,17 +99466,7 @@ var animations70 = {
 };
 function IconSvg995({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React74.useRef(controls);
-  current.current = controls;
-  React74.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1001(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs942(motion2.g, { variants: animations70.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1001(motion2.path, { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", variants: animations70.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1001(motion2.path, { d: "M12 7v2", variants: animations70.default.path2, initial: "initial", animate: controls }),
@@ -100234,7 +100417,6 @@ function IconSvg1028({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/moon-star.tsx
-import * as React75 from "react";
 import { jsx as jsx1035, jsxs as jsxs974 } from "react/jsx-runtime";
 var animations71 = {
   default: {
@@ -100277,17 +100459,7 @@ var animations71 = {
 };
 function IconSvg1029({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React75.useRef(controls);
-  current.current = controls;
-  React75.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs974(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1035(motion2.path, { d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401", variants: animations71.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsxs974(motion2.g, { variants: animations71.default.group, initial: "initial", animate: controls, children: [
@@ -100753,7 +100925,6 @@ function IconSvg1045({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/move-down.tsx
-import * as React76 from "react";
 import { jsx as jsx1052, jsxs as jsxs989 } from "react/jsx-runtime";
 var animations72 = {
   default: {
@@ -100855,17 +101026,7 @@ var animations72 = {
 };
 function IconSvg1046({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React76.useRef(controls);
-  current.current = controls;
-  React76.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1052(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations72.default.group1, initial: "initial", animate: controls, children: /* @__PURE__ */ jsxs989(motion2.g, { variants: animations72.default.group2, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1052(motion2.path, { d: "M12 2V22", variants: animations72.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1052(motion2.path, { d: "M8 18L12 22L16 18", variants: animations72.default.path2, initial: "initial", animate: controls })
@@ -100952,7 +101113,6 @@ function IconSvg1049({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/move-left.tsx
-import * as React77 from "react";
 import { jsx as jsx1056, jsxs as jsxs993 } from "react/jsx-runtime";
 var animations73 = {
   default: {
@@ -101054,17 +101214,7 @@ var animations73 = {
 };
 function IconSvg1050({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React77.useRef(controls);
-  current.current = controls;
-  React77.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1056(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations73.default.group1, initial: "initial", animate: controls, children: /* @__PURE__ */ jsxs993(motion2.g, { variants: animations73.default.group2, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1056(motion2.path, { d: "M2 12H22", variants: animations73.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1056(motion2.path, { d: "M6 8L2 12L6 16", variants: animations73.default.path2, initial: "initial", animate: controls })
@@ -101072,7 +101222,6 @@ function IconSvg1050({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/move-right.tsx
-import * as React78 from "react";
 import { jsx as jsx1057, jsxs as jsxs994 } from "react/jsx-runtime";
 var animations74 = {
   default: {
@@ -101174,17 +101323,7 @@ var animations74 = {
 };
 function IconSvg1051({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React78.useRef(controls);
-  current.current = controls;
-  React78.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1057(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations74.default.group1, initial: "initial", animate: controls, children: /* @__PURE__ */ jsxs994(motion2.g, { variants: animations74.default.group2, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1057(motion2.path, { d: "M2 12H22", variants: animations74.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1057(motion2.path, { d: "M18 8L22 12L18 16", variants: animations74.default.path2, initial: "initial", animate: controls })
@@ -101192,7 +101331,6 @@ function IconSvg1051({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/move-up.tsx
-import * as React79 from "react";
 import { jsx as jsx1058, jsxs as jsxs995 } from "react/jsx-runtime";
 var animations75 = {
   default: {
@@ -101294,17 +101432,7 @@ var animations75 = {
 };
 function IconSvg1052({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React79.useRef(controls);
-  current.current = controls;
-  React79.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1058(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations75.default.group1, initial: "initial", animate: controls, children: /* @__PURE__ */ jsxs995(motion2.g, { variants: animations75.default.group2, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1058(motion2.path, { d: "M12 2V22", variants: animations75.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1058(motion2.path, { d: "M8 6L12 2L16 6", variants: animations75.default.path2, initial: "initial", animate: controls })
@@ -102174,7 +102302,6 @@ function IconSvg1082({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/orbit.tsx
-import * as React80 from "react";
 import { jsx as jsx1089, jsxs as jsxs1022 } from "react/jsx-runtime";
 var animations76 = {
   default: {
@@ -102198,17 +102325,7 @@ var animations76 = {
 };
 function IconSvg1083({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React80.useRef(controls);
-  current.current = controls;
-  React80.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1022(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations76.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1089(motion2.path, { d: "M20.341 6.484A10 10 0 0 1 10.266 21.85", variants: animations76.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1089(motion2.path, { d: "M3.659 17.516A10 10 0 0 1 13.74 2.152", variants: animations76.default.path2, initial: "initial", animate: controls }),
@@ -102532,7 +102649,6 @@ function IconSvg1094({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/paintbrush.tsx
-import * as React81 from "react";
 import { jsx as jsx1101, jsxs as jsxs1034 } from "react/jsx-runtime";
 var animations77 = {
   default: {
@@ -102554,17 +102670,7 @@ var animations77 = {
 };
 function IconSvg1095({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React81.useRef(controls);
-  current.current = controls;
-  React81.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1034(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations77.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1101(motion2.path, { d: "m14.622 17.897-10.68-2.913", variants: animations77.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1101(motion2.path, { d: "M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z", variants: animations77.default.path2, initial: "initial", animate: controls }),
@@ -102691,7 +102797,6 @@ function IconSvg1098({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-bottom.tsx
-import * as React82 from "react";
 import { jsx as jsx1105, jsxs as jsxs1038 } from "react/jsx-runtime";
 var animations78 = {
   default: {
@@ -102710,17 +102815,7 @@ var animations78 = {
 };
 function IconSvg1099({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React82.useRef(controls);
-  current.current = controls;
-  React82.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1038(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1105(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations78.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1105(motion2.line, { x1: 3, y1: 15, x2: 21, y2: 15, variants: animations78.default.line, initial: "initial", animate: controls })
@@ -102728,7 +102823,6 @@ function IconSvg1099({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-bottom-close.tsx
-import * as React83 from "react";
 import { jsx as jsx1106, jsxs as jsxs1039 } from "react/jsx-runtime";
 var animations79 = {
   default: {
@@ -102754,17 +102848,7 @@ var animations79 = {
 };
 function IconSvg1100({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React83.useRef(controls);
-  current.current = controls;
-  React83.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1039(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1106(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations79.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1106(motion2.line, { x1: 3, y1: 15, x2: 21, y2: 15, variants: animations79.default.line, initial: "initial", animate: controls }),
@@ -102802,7 +102886,6 @@ function IconSvg1101({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-bottom-open.tsx
-import * as React84 from "react";
 import { jsx as jsx1108, jsxs as jsxs1041 } from "react/jsx-runtime";
 var animations80 = {
   default: {
@@ -102828,17 +102911,7 @@ var animations80 = {
 };
 function IconSvg1102({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React84.useRef(controls);
-  current.current = controls;
-  React84.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1041(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1108(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations80.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1108(motion2.line, { x1: 3, y1: 15, x2: 21, y2: 15, variants: animations80.default.line, initial: "initial", animate: controls }),
@@ -102847,7 +102920,6 @@ function IconSvg1102({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-left.tsx
-import * as React85 from "react";
 import { jsx as jsx1109, jsxs as jsxs1042 } from "react/jsx-runtime";
 var animations81 = {
   default: {
@@ -102866,17 +102938,7 @@ var animations81 = {
 };
 function IconSvg1103({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React85.useRef(controls);
-  current.current = controls;
-  React85.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1042(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1109(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations81.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1109(motion2.line, { x1: 9, y1: 3, x2: 9, y2: 21, variants: animations81.default.line, initial: "initial", animate: controls })
@@ -102986,7 +103048,6 @@ function IconSvg1107({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-right.tsx
-import * as React86 from "react";
 import { jsx as jsx1114, jsxs as jsxs1047 } from "react/jsx-runtime";
 var animations82 = {
   default: {
@@ -103005,17 +103066,7 @@ var animations82 = {
 };
 function IconSvg1108({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React86.useRef(controls);
-  current.current = controls;
-  React86.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1047(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1114(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations82.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1114(motion2.line, { x1: 15, y1: 3, x2: 15, y2: 21, variants: animations82.default.line, initial: "initial", animate: controls })
@@ -103023,7 +103074,6 @@ function IconSvg1108({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-right-close.tsx
-import * as React87 from "react";
 import { jsx as jsx1115, jsxs as jsxs1048 } from "react/jsx-runtime";
 var animations83 = {
   default: {
@@ -103049,17 +103099,7 @@ var animations83 = {
 };
 function IconSvg1109({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React87.useRef(controls);
-  current.current = controls;
-  React87.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1048(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1115(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations83.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1115(motion2.line, { x1: 15, y1: 3, x2: 15, y2: 21, variants: animations83.default.line, initial: "initial", animate: controls }),
@@ -103117,7 +103157,6 @@ function IconSvg1111({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-top.tsx
-import * as React88 from "react";
 import { jsx as jsx1118, jsxs as jsxs1051 } from "react/jsx-runtime";
 var animations84 = {
   default: {
@@ -103136,17 +103175,7 @@ var animations84 = {
 };
 function IconSvg1112({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React88.useRef(controls);
-  current.current = controls;
-  React88.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1051(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1118(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations84.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1118(motion2.line, { x1: 3, y1: 9, x2: 21, y2: 9, variants: animations84.default.line, initial: "initial", animate: controls })
@@ -103187,7 +103216,6 @@ function IconSvg1113({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-top-close.tsx
-import * as React89 from "react";
 import { jsx as jsx1120, jsxs as jsxs1053 } from "react/jsx-runtime";
 var animations85 = {
   default: {
@@ -103213,17 +103241,7 @@ var animations85 = {
 };
 function IconSvg1114({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React89.useRef(controls);
-  current.current = controls;
-  React89.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1053(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1120(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations85.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1120(motion2.line, { x1: 3, y1: 9, x2: 21, y2: 9, variants: animations85.default.line, initial: "initial", animate: controls }),
@@ -103261,7 +103279,6 @@ function IconSvg1115({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/panel-top-open.tsx
-import * as React90 from "react";
 import { jsx as jsx1122, jsxs as jsxs1055 } from "react/jsx-runtime";
 var animations86 = {
   default: {
@@ -103287,17 +103304,7 @@ var animations86 = {
 };
 function IconSvg1116({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React90.useRef(controls);
-  current.current = controls;
-  React90.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1055(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1122(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations86.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1122(motion2.line, { x1: 3, y1: 9, x2: 21, y2: 9, variants: animations86.default.line, initial: "initial", animate: controls }),
@@ -104517,7 +104524,6 @@ function IconSvg1156({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/pin.tsx
-import * as React91 from "react";
 import { jsx as jsx1163, jsxs as jsxs1092 } from "react/jsx-runtime";
 var animations87 = {
   default: {
@@ -104574,17 +104580,7 @@ var animations87 = {
 };
 function IconSvg1157({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React91.useRef(controls);
-  current.current = controls;
-  React91.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1163(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs1092(motion2.g, { variants: animations87.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1163(motion2.line, { x1: 12, y1: 17.1, x2: 12, y2: 22, variants: animations87.default.line, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1163(motion2.path, { d: "M9,10.8c0,.8-.4,1.5-1.1,1.8l-1.8.9c-.7.3-1.1,1-1.1,1.8v.8c0,.6.4,1,1,1h12c.6,0,1-.4,1-1v-.8c0-.8-.4-1.5-1.1-1.8l-1.8-.9c-.7-.3-1.1-1-1.1-1.8v-3.8c0-.6.4-1,1-1,1.1,0,2-.9,2-2s-.9-2-2-2h-8c-1.1,0-2,.9-2,2s.9,2,2,2,1,.4,1,1v3.8Z", variants: animations87.default.path, initial: "initial", animate: controls })
@@ -104592,7 +104588,6 @@ function IconSvg1157({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/pin-off.tsx
-import * as React92 from "react";
 import { jsx as jsx1164, jsxs as jsxs1093 } from "react/jsx-runtime";
 var animations88 = {
   default: {
@@ -104629,17 +104624,7 @@ var animations88 = {
 };
 function IconSvg1158({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React92.useRef(controls);
-  current.current = controls;
-  React92.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1093(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations88.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1164(motion2.path, { d: "M12 17v5", variants: animations88.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1164(motion2.path, { d: "M15 9.34V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H7.89", variants: animations88.default.path2, initial: "initial", animate: controls }),
@@ -107127,7 +107112,6 @@ function IconSvg1238({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/rotate-ccw-key.tsx
-import * as React93 from "react";
 import { jsx as jsx1245, jsxs as jsxs1168 } from "react/jsx-runtime";
 var animations89 = {
   default: {
@@ -107167,17 +107151,7 @@ var animations89 = {
 };
 function IconSvg1239({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React93.useRef(controls);
-  current.current = controls;
-  React93.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1168(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations89.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1245(motion2.path, { d: "m14.5 9.5 1 1", variants: animations89.default.keyPart1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1245(motion2.path, { d: "m15.5 8.5-4 4", variants: animations89.default.keyPart2, initial: "initial", animate: controls }),
@@ -108251,7 +108225,6 @@ function IconSvg1274({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/scissors.tsx
-import * as React94 from "react";
 import { jsx as jsx1281, jsxs as jsxs1204 } from "react/jsx-runtime";
 var animations90 = {
   default: {
@@ -108286,17 +108259,7 @@ var animations90 = {
 };
 function IconSvg1275({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React94.useRef(controls);
-  current.current = controls;
-  React94.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1204(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1204(motion2.g, { variants: animations90.default.group1, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1281(motion2.circle, { cx: "6", cy: "6", r: "3", variants: animations90.default.circle1, initial: "initial", animate: controls }),
@@ -108311,7 +108274,6 @@ function IconSvg1275({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/scissors-line-dashed.tsx
-import * as React95 from "react";
 import { jsx as jsx1282, jsxs as jsxs1205 } from "react/jsx-runtime";
 var animations91 = {
   default: {
@@ -108388,17 +108350,7 @@ var animations91 = {
 };
 function IconSvg1276({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React95.useRef(controls);
-  current.current = controls;
-  React95.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1205(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1205(motion2.g, { variants: animations91.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsxs1205(motion2.g, { variants: animations91.default.group1, initial: "initial", animate: controls, children: [
@@ -108776,7 +108728,6 @@ function IconSvg1289({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/send-horizontal.tsx
-import * as React96 from "react";
 import { jsx as jsx1296, jsxs as jsxs1219 } from "react/jsx-runtime";
 var animations92 = {
   default: {
@@ -108804,17 +108755,7 @@ var animations92 = {
 };
 function IconSvg1290({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React96.useRef(controls);
-  current.current = controls;
-  React96.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1296(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxs1219(motion2.g, { variants: animations92.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1296(motion2.path, { d: "M3.7,3c-.2-.1-.5,0-.7.2,0,.1,0,.3,0,.4l2.8,7.6c.2.5.2.9,0,1.4l-2.8,7.6c0,.3,0,.5.3.6.1,0,.3,0,.4,0l18-8.5c.2-.1.4-.4.2-.7,0-.1-.1-.2-.2-.2L3.7,3Z", variants: animations92.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1296(motion2.path, { d: "M6,12h16", variants: animations92.default.path2, initial: "initial", animate: controls })
@@ -109984,7 +109925,6 @@ function IconSvg1331({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/signal.tsx
-import * as React97 from "react";
 import { jsx as jsx1338, jsxs as jsxs1256 } from "react/jsx-runtime";
 var pathAnimation2 = {
   initial: {
@@ -110019,17 +109959,7 @@ var animations93 = {
 };
 function IconSvg1332({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React97.useRef(controls);
-  current.current = controls;
-  React97.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1256(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations93.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1338(motion2.path, { d: "M2 20h.01", variants: animations93.default.path1 }),
     /* @__PURE__ */ jsx1338(motion2.path, { d: "M7 20v-4", variants: animations93.default.path2 }),
@@ -110040,7 +109970,6 @@ function IconSvg1332({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/signal-high.tsx
-import * as React98 from "react";
 import { jsx as jsx1339, jsxs as jsxs1257 } from "react/jsx-runtime";
 var pathAnimation3 = {
   initial: {
@@ -110074,17 +110003,7 @@ var animations94 = {
 };
 function IconSvg1333({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React98.useRef(controls);
-  current.current = controls;
-  React98.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1257(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations94.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1339(motion2.path, { d: "M2 20h.01", variants: animations94.default.path1 }),
     /* @__PURE__ */ jsx1339(motion2.path, { d: "M7 20v-4", variants: animations94.default.path2 }),
@@ -110094,7 +110013,6 @@ function IconSvg1333({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/signal-low.tsx
-import * as React99 from "react";
 import { jsx as jsx1340, jsxs as jsxs1258 } from "react/jsx-runtime";
 var pathAnimation4 = {
   initial: {
@@ -110126,17 +110044,7 @@ var animations95 = {
 };
 function IconSvg1334({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React99.useRef(controls);
-  current.current = controls;
-  React99.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1258(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations95.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1340(motion2.path, { d: "M2 20h.01", variants: animations95.default.path1 }),
     /* @__PURE__ */ jsx1340(motion2.path, { d: "M7 20v-4", variants: animations95.default.path2 })
@@ -110144,7 +110052,6 @@ function IconSvg1334({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/signal-medium.tsx
-import * as React100 from "react";
 import { jsx as jsx1341, jsxs as jsxs1259 } from "react/jsx-runtime";
 var pathAnimation5 = {
   initial: {
@@ -110177,17 +110084,7 @@ var animations96 = {
 };
 function IconSvg1335({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React100.useRef(controls);
-  current.current = controls;
-  React100.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1259(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations96.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1341(motion2.path, { d: "M2 20h.01", variants: animations96.default.path1 }),
     /* @__PURE__ */ jsx1341(motion2.path, { d: "M7 20v-4", variants: animations96.default.path2 }),
@@ -110196,7 +110093,6 @@ function IconSvg1335({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/signal-zero.tsx
-import * as React101 from "react";
 import { jsx as jsx1342 } from "react/jsx-runtime";
 var animations97 = {
   default: {
@@ -110218,17 +110114,7 @@ var animations97 = {
 };
 function IconSvg1336({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React101.useRef(controls);
-  current.current = controls;
-  React101.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1342(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsx1342(motion2.path, { d: "M2 20h.01", variants: animations97.default.path1, initial: "initial", animate: controls }) });
 }
 
@@ -110566,7 +110452,6 @@ function IconSvg1346({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/sliders-vertical.tsx
-import * as React102 from "react";
 import { jsx as jsx1353, jsxs as jsxs1268 } from "react/jsx-runtime";
 var animations98 = {
   default: {
@@ -110690,17 +110575,7 @@ var animations98 = {
 };
 function IconSvg1347({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React102.useRef(controls);
-  current.current = controls;
-  React102.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1268(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1353(motion2.line, { x1: "5", y1: "3", x2: "5", y2: "10", variants: animations98.default.line1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1353(motion2.line, { x1: "3", y1: "14", x2: "7", y2: "14", variants: animations98.default.line2, initial: "initial", animate: controls }),
@@ -111128,7 +111003,6 @@ function IconSvg1360({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/sparkle.tsx
-import * as React103 from "react";
 import { jsx as jsx1367 } from "react/jsx-runtime";
 var animations99 = {
   default: {
@@ -111167,17 +111041,7 @@ var animations99 = {
 };
 function IconSvg1361({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React103.useRef(controls);
-  current.current = controls;
-  React103.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1367(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations99.default.group, initial: "initial", animate: controls, children: /* @__PURE__ */ jsx1367(motion2.path, { d: "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z", variants: animations99.default.path, initial: "initial", animate: controls }) });
 }
 
@@ -111736,7 +111600,6 @@ function IconSvg1379({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-arrow-out-down-left.tsx
-import * as React104 from "react";
 import { jsx as jsx1386, jsxs as jsxs1298 } from "react/jsx-runtime";
 var animations100 = {
   default: {
@@ -111775,17 +111638,7 @@ var animations100 = {
 };
 function IconSvg1380({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React104.useRef(controls);
-  current.current = controls;
-  React104.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1298(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1298(motion2.g, { variants: animations100.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1386(motion2.path, { d: "m3 21 9-9", variants: animations100.default.path1, initial: "initial", animate: controls }),
@@ -111796,7 +111649,6 @@ function IconSvg1380({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-arrow-out-down-right.tsx
-import * as React105 from "react";
 import { jsx as jsx1387, jsxs as jsxs1299 } from "react/jsx-runtime";
 var animations101 = {
   default: {
@@ -111835,17 +111687,7 @@ var animations101 = {
 };
 function IconSvg1381({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React105.useRef(controls);
-  current.current = controls;
-  React105.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1299(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1299(motion2.g, { variants: animations101.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1387(motion2.path, { d: "m21 21-9-9", variants: animations101.default.path1, initial: "initial", animate: controls }),
@@ -111856,7 +111698,6 @@ function IconSvg1381({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-arrow-out-up-left.tsx
-import * as React106 from "react";
 import { jsx as jsx1388, jsxs as jsxs1300 } from "react/jsx-runtime";
 var animations102 = {
   default: {
@@ -111895,17 +111736,7 @@ var animations102 = {
 };
 function IconSvg1382({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React106.useRef(controls);
-  current.current = controls;
-  React106.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1300(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1300(motion2.g, { variants: animations102.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1388(motion2.path, { d: "m3 3 9 9", variants: animations102.default.path1, initial: "initial", animate: controls }),
@@ -111916,7 +111747,6 @@ function IconSvg1382({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-arrow-out-up-right.tsx
-import * as React107 from "react";
 import { jsx as jsx1389, jsxs as jsxs1301 } from "react/jsx-runtime";
 var animations103 = {
   default: {
@@ -111955,17 +111785,7 @@ var animations103 = {
 };
 function IconSvg1383({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React107.useRef(controls);
-  current.current = controls;
-  React107.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1301(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1301(motion2.g, { variants: animations103.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1389(motion2.path, { d: "m21 3-9 9", variants: animations103.default.path1, initial: "initial", animate: controls }),
@@ -112569,7 +112389,6 @@ function IconSvg1405({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-dashed-kanban.tsx
-import * as React108 from "react";
 import { jsx as jsx1412, jsxs as jsxs1324 } from "react/jsx-runtime";
 var animations104 = {
   default: {
@@ -112616,17 +112435,7 @@ var animations104 = {
 };
 function IconSvg1406({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React108.useRef(controls);
-  current.current = controls;
-  React108.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1324(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1412(motion2.path, { d: "M5 3a2 2 0 0 0-2 2", variants: animations104.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1412(motion2.path, { d: "M9 3h1", variants: animations104.default.path2, initial: "initial", animate: controls }),
@@ -112861,7 +112670,6 @@ function IconSvg1413({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-kanban.tsx
-import * as React109 from "react";
 import { jsx as jsx1420, jsxs as jsxs1332 } from "react/jsx-runtime";
 var animations105 = {
   default: {
@@ -112897,17 +112705,7 @@ var animations105 = {
 };
 function IconSvg1414({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React109.useRef(controls);
-  current.current = controls;
-  React109.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1332(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1420(motion2.rect, { x: 3, y: 3, width: 18, height: 18, rx: 2, ry: 2, variants: animations105.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1420(motion2.line, { x1: 16, y1: 7, x2: 16, y2: 16, variants: animations105.default.line1, initial: "initial", animate: controls }),
@@ -113266,7 +113064,6 @@ function IconSvg1427({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-plus.tsx
-import * as React110 from "react";
 import { jsx as jsx1434, jsxs as jsxs1346 } from "react/jsx-runtime";
 var animations106 = {
   default: {
@@ -113295,17 +113092,7 @@ var animations106 = {
 };
 function IconSvg1428({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React110.useRef(controls);
-  current.current = controls;
-  React110.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1346(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1434(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations106.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1434(motion2.line, { x1: 8, y1: 12, x2: 16, y2: 12, variants: animations106.default.line1, initial: "initial", animate: controls }),
@@ -113719,7 +113506,6 @@ function IconSvg1443({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/square-x.tsx
-import * as React111 from "react";
 import { jsx as jsx1450, jsxs as jsxs1362 } from "react/jsx-runtime";
 var animations107 = {
   default: {
@@ -113748,17 +113534,7 @@ var animations107 = {
 };
 function IconSvg1444({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React111.useRef(controls);
-  current.current = controls;
-  React111.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1362(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1450(motion2.rect, { width: 18, height: 18, x: 3, y: 3, rx: 2, ry: 2, variants: animations107.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1450(motion2.line, { x1: 9, y1: 15, x2: 15, y2: 9, variants: animations107.default.line1, initial: "initial", animate: controls }),
@@ -114006,7 +113782,6 @@ function IconSvg1452({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/star.tsx
-import * as React112 from "react";
 import { jsx as jsx1459 } from "react/jsx-runtime";
 var animations108 = {
   default: {
@@ -114045,17 +113820,7 @@ var animations108 = {
 };
 function IconSvg1453({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React112.useRef(controls);
-  current.current = controls;
-  React112.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1459(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations108.default.group, initial: "initial", animate: controls, children: /* @__PURE__ */ jsx1459(motion2.path, { d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z", variants: animations108.default.path, initial: "initial", animate: controls }) });
 }
 
@@ -116315,7 +116080,6 @@ function IconSvg1530({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/timer-off.tsx
-import * as React113 from "react";
 import { jsx as jsx1537, jsxs as jsxs1442 } from "react/jsx-runtime";
 var animations109 = {
   default: {
@@ -116354,17 +116118,7 @@ var animations109 = {
 };
 function IconSvg1531({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React113.useRef(controls);
-  current.current = controls;
-  React113.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1442(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations109.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1537(motion2.path, { d: "M10 2h4", variants: animations109.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1537(motion2.path, { d: "M4.6 11a8 8 0 0 0 1.7 8.7 8 8 0 0 0 8.7 1.7", variants: animations109.default.path2, initial: "initial", animate: controls }),
@@ -116403,7 +116157,6 @@ function IconSvg1532({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/toggle-left.tsx
-import * as React114 from "react";
 import { jsx as jsx1539, jsxs as jsxs1444 } from "react/jsx-runtime";
 var animations110 = {
   default: {
@@ -116439,17 +116192,7 @@ var animations110 = {
 };
 function IconSvg1533({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React114.useRef(controls);
-  current.current = controls;
-  React114.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1444(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1539(motion2.rect, { width: 20, height: 14, x: 2, y: 5, rx: 7, variants: animations110.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1539(motion2.circle, { cx: 9, cy: 12, r: 3, variants: animations110.default.circle, initial: "initial", animate: controls })
@@ -116457,7 +116200,6 @@ function IconSvg1533({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/toggle-right.tsx
-import * as React115 from "react";
 import { jsx as jsx1540, jsxs as jsxs1445 } from "react/jsx-runtime";
 var animations111 = {
   default: {
@@ -116493,17 +116235,7 @@ var animations111 = {
 };
 function IconSvg1534({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React115.useRef(controls);
-  current.current = controls;
-  React115.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1445(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1540(motion2.rect, { width: 20, height: 14, x: 2, y: 5, rx: 7, variants: animations111.default.rect, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1540(motion2.circle, { cx: 15, cy: 12, r: 3, variants: animations111.default.circle, initial: "initial", animate: controls })
@@ -117017,7 +116749,6 @@ function IconSvg1551({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/trash.tsx
-import * as React116 from "react";
 import { jsx as jsx1558, jsxs as jsxs1463 } from "react/jsx-runtime";
 var animations112 = {
   default: {
@@ -117053,17 +116784,7 @@ var animations112 = {
 };
 function IconSvg1552({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React116.useRef(controls);
-  current.current = controls;
-  React116.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1463(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1463(motion2.g, { variants: animations112.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1558(motion2.path, { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", variants: animations112.default.path1, initial: "initial", animate: controls }),
@@ -117074,7 +116795,6 @@ function IconSvg1552({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/trash-2.tsx
-import * as React117 from "react";
 import { jsx as jsx1559, jsxs as jsxs1464 } from "react/jsx-runtime";
 var animations113 = {
   default: {
@@ -117134,17 +116854,7 @@ var animations113 = {
 };
 function IconSvg1553({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React117.useRef(controls);
-  current.current = controls;
-  React117.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1464(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxs1464(motion2.g, { variants: animations113.default.group, initial: "initial", animate: controls, children: [
       /* @__PURE__ */ jsx1559(motion2.path, { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", variants: animations113.default.path1, initial: "initial", animate: controls }),
@@ -118391,7 +118101,6 @@ function IconSvg1591({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/unplug.tsx
-import * as React118 from "react";
 import { jsx as jsx1598, jsxs as jsxs1498 } from "react/jsx-runtime";
 var animations114 = {
   default: {
@@ -118557,17 +118266,7 @@ var animations114 = {
 };
 function IconSvg1592({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React118.useRef(controls);
-  current.current = controls;
-  React118.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1498(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1598(motion2.path, { d: "m19 5 3-3", variants: animations114.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1598(motion2.path, { d: "m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z", variants: animations114.default.path2, initial: "initial", animate: controls }),
@@ -118883,7 +118582,6 @@ function IconSvg1602({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/user-round.tsx
-import * as React119 from "react";
 import { jsx as jsx1609, jsxs as jsxs1509 } from "react/jsx-runtime";
 var animations115 = {
   default: {
@@ -118915,17 +118613,7 @@ var animations115 = {
 };
 function IconSvg1603({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React119.useRef(controls);
-  current.current = controls;
-  React119.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1509(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1609(motion2.path, { d: "M20 21a8 8 0 0 0-16 0", variants: animations115.default.path, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1609(motion2.circle, { cx: 12, cy: 8, r: 5, variants: animations115.default.circle, initial: "initial", animate: controls })
@@ -119862,96 +119550,18 @@ function IconSvg1635({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/volume-cycle.tsx
-import * as React120 from "react";
 import { jsx as jsx1642, jsxs as jsxs1542 } from "react/jsx-runtime";
-function createVolumeController(advance, onCycle) {
-  let phase = "idle";
-  let pending = null;
-  const finish = () => {
-    if (!pending) return;
-    const cycle = pending;
-    pending = null;
-    cycle.signal.removeEventListener("abort", cycle.onAbort);
-    cycle.resolve();
-  };
-  const move = (next) => {
-    phase = next;
-    advance(next);
-  };
-  return {
-    play(signal) {
-      if (signal.aborted) return Promise.resolve();
-      finish();
-      return new Promise((resolve) => {
-        const onAbort = () => {
-          finish();
-          move("idle");
-        };
-        pending = { signal, resolve, onAbort };
-        signal.addEventListener("abort", onAbort, { once: true });
-        onCycle();
-        move("wave");
-      });
-    },
-    reset() {
-      finish();
-      move("idle");
-    },
-    onWaveComplete() {
-      if (phase === "wave" && pending && !pending.signal.aborted) move("return");
-    },
-    onIdleComplete() {
-      if (phase === "return" && pending && !pending.signal.aborted) {
-        move("idle");
-        finish();
-      }
-    },
-    dispose() {
-      finish();
-    }
-  };
-}
-function VolumeCycle({ size, color: color2, strokeWidth, reduced, register }) {
-  const [phase, setPhase] = React120.useState("idle");
-  const [cycleNumber, setCycleNumber] = React120.useState(0);
-  const machine = React120.useRef(null);
-  React120.useLayoutEffect(() => {
-    const current = createVolumeController(setPhase, () => setCycleNumber((number2) => number2 + 1));
-    machine.current = current;
-    if (reduced) {
-      register(null);
-      return () => {
-        current.dispose();
-        machine.current = null;
-      };
-    }
-    register(current);
-    return () => {
-      current.dispose();
-      machine.current = null;
-      register(null);
-    };
-  }, [register, reduced]);
-  if (reduced) return /* @__PURE__ */ jsxs1542("svg", { fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, style: { color: color2 }, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
-    /* @__PURE__ */ jsx1642("path", { d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" }),
-    /* @__PURE__ */ jsx1642("line", { x1: "22", x2: "16", y1: "9", y2: "15" }),
-    /* @__PURE__ */ jsx1642("line", { x1: "16", x2: "22", y1: "9", y2: "15" })
-  ] });
-  const waves = phase === "wave";
-  return /* @__PURE__ */ jsxs1542("svg", { "data-volume-cycle": cycleNumber, "data-volume-phase": phase, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, style: { color: color2 }, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
-    /* @__PURE__ */ jsx1642("path", { d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" }),
-    /* @__PURE__ */ jsx1642(AnimatePresence, { initial: false, mode: "wait", children: waves ? /* @__PURE__ */ jsxs1542(React120.Fragment, { children: [
-      /* @__PURE__ */ jsx1642(motion2.path, { animate: { opacity: 1, transition: { delay: 0.1 } }, d: "M16 9a5 5 0 0 1 0 6", exit: { opacity: 0 }, initial: { opacity: 0 } }),
-      /* @__PURE__ */ jsx1642(motion2.path, { animate: { opacity: 1, transition: { delay: 0.2 } }, d: "M19.364 18.364a9 9 0 0 0 0-12.728", exit: { opacity: 0 }, initial: { opacity: 0 }, onAnimationComplete: () => machine.current?.onWaveComplete() })
-    ] }, "volume-icon-active") : /* @__PURE__ */ jsxs1542(React120.Fragment, { children: [
-      /* @__PURE__ */ jsx1642(motion2.line, { animate: { pathLength: [0, 1], opacity: [0, 1], transition: { delay: 0.1 } }, exit: { pathLength: 1, opacity: 1 }, initial: { pathLength: 1, opacity: 1 }, x1: "22", x2: "16", y1: "9", y2: "15" }),
-      /* @__PURE__ */ jsx1642(motion2.line, { animate: { pathLength: [0, 1], opacity: [0, 1], transition: { delay: 0.2 } }, exit: { pathLength: 1, opacity: 1 }, initial: { pathLength: 1, opacity: 1 }, onAnimationComplete: () => machine.current?.onIdleComplete(), x1: "16", x2: "22", y1: "9", y2: "15" })
-    ] }, "volume-icon-inactive") })
+function VolumeCycle({ size, color: color2, strokeWidth, register }) {
+  const controls = useAnimation();
+  useControlsDriver(register, controls);
+  return /* @__PURE__ */ jsxs1542("svg", { style: { color: color2 }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
+    /* @__PURE__ */ jsx1642(motion2.path, { d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" }),
+    ["m22 9-6 6", "m16 9 6 6"].map((d) => /* @__PURE__ */ jsx1642(motion2.path, { d, initial: "normal", animate: controls, variants: { normal: { opacity: 1, pathLength: 1 }, animate: { opacity: 0, pathLength: 0, transition: { duration: 0.2 } } } }, d)),
+    ["M16 9a5 5 0 0 1 0 6", "M19.364 5.636a9 9 0 0 1 0 12.728"].map((d, index) => /* @__PURE__ */ jsx1642(motion2.path, { d, initial: "normal", animate: controls, variants: { normal: { opacity: 0, pathLength: 0 }, animate: { opacity: 1, pathLength: 1, transition: { duration: 0.3, delay: 0.2 + index * 0.2 } } } }, d))
   ] });
 }
 
 // src/icons/volume-1.tsx
-import * as React121 from "react";
 import { jsx as jsx1643, jsxs as jsxs1543 } from "react/jsx-runtime";
 var animations116 = {
   default: {
@@ -119983,17 +119593,7 @@ var animations116 = {
 };
 function IconSvg1636({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React121.useRef(controls);
-  current.current = controls;
-  React121.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1543(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1643(motion2.path, { d: "M16 9a5 5 0 0 1 0 6", variants: animations116.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1643(motion2.path, { d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z", variants: animations116.default.path2, initial: "initial", animate: controls })
@@ -120001,7 +119601,6 @@ function IconSvg1636({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/volume-2.tsx
-import * as React122 from "react";
 import { jsx as jsx1644, jsxs as jsxs1544 } from "react/jsx-runtime";
 var animations117 = {
   default: (() => {
@@ -120040,17 +119639,7 @@ var animations117 = {
 };
 function IconSvg1637({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React122.useRef(controls);
-  current.current = controls;
-  React122.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1544(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1644(motion2.path, { d: "M16 9a5 5 0 0 1 0 6", variants: animations117.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1644(motion2.path, { d: "M19.364 18.364a9 9 0 0 0 0-12.728", variants: animations117.default.path2, initial: "initial", animate: controls }),
@@ -120059,7 +119648,6 @@ function IconSvg1637({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/volume-off.tsx
-import * as React123 from "react";
 import { jsx as jsx1645, jsxs as jsxs1545 } from "react/jsx-runtime";
 var animations118 = {
   default: {
@@ -120098,17 +119686,7 @@ var animations118 = {
 };
 function IconSvg1638({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React123.useRef(controls);
-  current.current = controls;
-  React123.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1545(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", variants: animations118.default.group, initial: "initial", animate: controls, children: [
     /* @__PURE__ */ jsx1645(motion2.path, { d: "M16 9a5 5 0 0 1 .95 2.293", variants: animations118.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1645(motion2.path, { d: "M19.364 5.636a9 9 0 0 1 1.889 9.96", variants: animations118.default.path2, initial: "initial", animate: controls }),
@@ -120921,7 +120499,6 @@ function IconSvg1664({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/wifi-high.tsx
-import * as React124 from "react";
 import { jsx as jsx1672, jsxs as jsxs1571 } from "react/jsx-runtime";
 var animations119 = {
   default: (() => {
@@ -120958,17 +120535,7 @@ var animations119 = {
 };
 function IconSvg1665({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React124.useRef(controls);
-  current.current = controls;
-  React124.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsxs1571(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsx1672(motion2.path, { d: "M12 20h.01", variants: animations119.default.path1, initial: "initial", animate: controls }),
     /* @__PURE__ */ jsx1672(motion2.path, { d: "M8.5 16.429a5 5 0 0 1 7 0", variants: animations119.default.path2, initial: "initial", animate: controls }),
@@ -120977,7 +120544,6 @@ function IconSvg1665({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/wifi-low.tsx
-import * as React125 from "react";
 import { jsx as jsx1673, jsxs as jsxs1572 } from "react/jsx-runtime";
 var WIFI_LEVELS2 = [
   { d: "M12 20h.01", initialOpacity: 1, delay: 0 },
@@ -120985,39 +120551,7 @@ var WIFI_LEVELS2 = [
 ];
 function IconSvg1666({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation(), questionControls = useAnimation();
-  const current = React125.useRef({ controls, questionControls });
-  current.current = { controls, questionControls };
-  React125.useLayoutEffect(() => {
-    register({
-      async play(signal) {
-        const { controls: controls2, questionControls: questionControls2 } = current.current;
-        await controls2.start("fadeOut");
-        if (signal.aborted) return;
-        await Promise.all([controls2.start("fadeIn"), questionControls2.start("show")]);
-        if (signal.aborted) return;
-        await new Promise((resolve) => {
-          const onAbort = () => {
-            clearTimeout(id3);
-            resolve();
-          };
-          const id3 = setTimeout(() => {
-            signal.removeEventListener("abort", onAbort);
-            resolve();
-          }, 1500);
-          signal.addEventListener("abort", onAbort, { once: true });
-        });
-        if (!signal.aborted) await questionControls2.start("hide");
-      },
-      reset() {
-        const { controls: controls2, questionControls: questionControls2 } = current.current;
-        controls2.stop();
-        questionControls2.stop();
-        controls2.set("fadeIn");
-        questionControls2.set("hide");
-      }
-    });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, [["fadeOut", "hide"], ["fadeIn", "show"], 1.5, ["fadeIn", "hide"]], ["fadeIn", "hide"], controls, questionControls);
   return /* @__PURE__ */ jsxs1572("svg", { style: { color: color2 }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
     WIFI_LEVELS2.map((level, index) => /* @__PURE__ */ jsx1673(motion2.path, { animate: controls, d: level.d, initial: { opacity: level.initialOpacity }, variants: {
       fadeOut: {
@@ -121144,7 +120678,6 @@ function IconSvg1669({ size, color: color2, strokeWidth, register }) {
 }
 
 // src/icons/wifi-zero.tsx
-import * as React126 from "react";
 import { jsx as jsx1677 } from "react/jsx-runtime";
 var animations120 = {
   default: {
@@ -121175,17 +120708,7 @@ var animations120 = {
 };
 function IconSvg1670({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
-  const current = React126.useRef(controls);
-  current.current = controls;
-  React126.useLayoutEffect(() => {
-    register({ async play(signal) {
-      if (!signal.aborted) await current.current.start("animate");
-    }, reset() {
-      current.current.stop();
-      current.current.set("initial");
-    } });
-    return () => register(null);
-  }, [register]);
+  useSequenceDriver(register, ["animate"], "initial", controls);
   return /* @__PURE__ */ jsx1677(motion2.svg, { style: { color: color2 }, xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsx1677(motion2.path, { d: "M12 20h.01", variants: animations120.default.path1, initial: "initial", animate: controls }) });
 }
 
@@ -123680,10 +123203,10 @@ var iconRegistry = {
 };
 
 // src/icon-factory.tsx
-import * as React127 from "react";
+import * as React5 from "react";
 import { jsx as jsx1705 } from "react/jsx-runtime";
 function createIcon(name) {
-  const Component5 = React127.forwardRef((props, ref) => /* @__PURE__ */ jsx1705(Icon2, { ...props, name, ref }));
+  const Component5 = React5.forwardRef((props, ref) => /* @__PURE__ */ jsx1705(Icon2, { ...props, name, ref }));
   Component5.displayName = name.split("-").map((part) => (part[0]?.toUpperCase() ?? "") + part.slice(1)).join("") + "Icon";
   return Component5;
 }
@@ -130145,7 +129668,7 @@ import { jsx as jsx1706 } from "react/jsx-runtime";
 function normalizeName(input) {
   return Object.hasOwn(lucideNames, input) ? lucideNames[input] : input;
 }
-var Icon2 = React128.forwardRef(function Icon3({ name = "", ...props }, ref) {
+var Icon2 = React6.forwardRef(function Icon3({ name = "", ...props }, ref) {
   const canonical = normalizeName(name);
   return /* @__PURE__ */ jsx1706(IconShell, { ...props, ref, name: canonical, svg: Object.hasOwn(iconRegistry, canonical) ? iconRegistry[canonical] : void 0 });
 });

@@ -1,5 +1,5 @@
 'use client';
-import * as React from 'react';
+import { useSequenceDriver } from '../icon-runtime';
 import { motion, useAnimation, type Variants } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 
@@ -41,8 +41,7 @@ const animations = {
 } as const;
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation();
- const current = React.useRef(controls); current.current = controls;
- React.useLayoutEffect(() => { register({ async play(signal) { if (!signal.aborted) await current.current.start('animate'); }, reset() { current.current.stop(); current.current.set('initial'); } }); return () => register(null); }, [register]);
+ useSequenceDriver(register, ['animate'], 'initial', controls);
  return (<motion.svg  style={{ color }} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" variants={(animations.default as Record<string, Variants>).group} initial="initial" animate={controls} >
       <motion.path d="m14.5 9.5 1 1" variants={(animations.default as Record<string, Variants>).keyPart1} initial="initial" animate={controls}/>
       <motion.path d="m15.5 8.5-4 4" variants={(animations.default as Record<string, Variants>).keyPart2} initial="initial" animate={controls}/>

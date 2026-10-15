@@ -4,7 +4,7 @@ import type { IconSvgProps } from '../icon-runtime';
 import { useControlsDriver } from '../icon-runtime';
 
 const CIRCLE_VARIANTS: Variants = {
-    initial: {
+    normal: {
         y: 0,
         x: 0,
     },
@@ -18,7 +18,7 @@ const CIRCLE_VARIANTS: Variants = {
     },
 };
 const PRIMARY_GROUP_VARIANTS: Variants = {
-    initial: {
+    normal: {
         rotate: 0,
     },
     animate: {
@@ -30,7 +30,7 @@ const PRIMARY_GROUP_VARIANTS: Variants = {
     },
 };
 const SECONDARY_GROUP_VARIANTS: Variants = {
-    initial: {
+    normal: {
         rotate: 0,
     },
     animate: {
@@ -43,7 +43,7 @@ const SECONDARY_GROUP_VARIANTS: Variants = {
     },
 };
 const PATH_VARIANTS: Variants = {
-    initial: {
+    normal: {
         rotate: 0,
         d: "M8 5 L5 8",
     },
@@ -63,13 +63,13 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  
  useControlsDriver(register, controls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <motion.circle animate={controls} cx="16" cy="4" initial="initial" r="1" variants={CIRCLE_VARIANTS}/>
-        <motion.g animate={controls} initial="initial" variants={PRIMARY_GROUP_VARIANTS}>
+        <motion.circle animate={controls} cx="16" cy="4" initial="normal" r="1" variants={CIRCLE_VARIANTS}/>
+        <motion.g animate={controls} initial="normal" variants={PRIMARY_GROUP_VARIANTS}>
           <path d="m18 19 1-7-6 1"/>
           <path d="M8,5l5.5,3-2.4,3.5"/>
-          <motion.path animate={controls} d="M8 5 L5 8" initial="initial" variants={PATH_VARIANTS}/>
+          <motion.path animate={controls} d="M8 5 L5 8" initial="normal" variants={PATH_VARIANTS}/>
         </motion.g>
-        <motion.g animate={controls} initial="initial" variants={SECONDARY_GROUP_VARIANTS}>
+        <motion.g animate={controls} initial="normal" variants={SECONDARY_GROUP_VARIANTS}>
           <path d="M4.2,14.5c-.8,2.6.7,5.4,3.3,6.2,1.2.4,2.4.3,3.6-.2"/>
           <path d="M13.8,17.5c.8-2.6-.7-5.4-3.3-6.2-1.2-.4-2.4-.3-3.6.2"/>
           <path d="M13,13.1c-.5-.7-1.1-1.2-1.9-1.6"/>

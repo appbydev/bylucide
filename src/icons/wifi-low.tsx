@@ -1,5 +1,5 @@
 'use client';
-import * as React from 'react';
+import { useSequenceDriver } from '../icon-runtime';
 import { motion, useAnimation } from 'motion/react';
 import type { IconSvgProps } from '../icon-runtime';
 const WIFI_LEVELS = [
@@ -8,19 +8,7 @@ const WIFI_LEVELS = [
 ];
 export default function IconSvg({ size, color, strokeWidth, register }: IconSvgProps) {
  const controls = useAnimation(), questionControls = useAnimation();
- const current = React.useRef({ controls, questionControls }); current.current = { controls, questionControls };
- React.useLayoutEffect(() => {
- register({
- async play(signal) {
- const { controls, questionControls } = current.current;
- await controls.start('fadeOut'); if (signal.aborted) return;
- await Promise.all([controls.start('fadeIn'), questionControls.start('show')]); if (signal.aborted) return;
- await new Promise<void>(resolve => { const onAbort = () => { clearTimeout(id); resolve(); }; const id = setTimeout(() => { signal.removeEventListener('abort', onAbort); resolve(); }, 1500); signal.addEventListener('abort', onAbort, { once: true }); });
- if (!signal.aborted) await questionControls.start('hide');
- },
- reset() { const { controls, questionControls } = current.current; controls.stop(); questionControls.stop(); controls.set('fadeIn'); questionControls.set('hide'); },
- }); return () => register(null);
- }, [register]);
+ useSequenceDriver(register, [['fadeOut', 'hide'], ['fadeIn', 'show'], 1.5, ['fadeIn', 'hide']], ['fadeIn', 'hide'], controls, questionControls);
  return (<svg  style={{ color }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
           {WIFI_LEVELS.map((level, index) => (<motion.path animate={controls} d={level.d} initial={{ opacity: level.initialOpacity }} key={level.d} variants={{
             fadeOut: {

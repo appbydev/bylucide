@@ -5,6 +5,7 @@ import { lucideSymbols } from './lucide-catalog';
 
 import type { LegacyAnimationControls } from 'motion/react';
 import type { IconProps } from './types';
+import { captureControls, createPhase, disposePhases, playPhase, type TimelinePhase } from './reversible-timeline';
 
 export interface IconDriver {
   play(signal: AbortSignal): Promise<void>;
@@ -18,7 +19,8 @@ export function useControlsDriver(register: IconSvgProps['register'], ...control
 }
 
 // Play upstream's named phases in order, waiting for Motion's actual completion callbacks.
-export function useSequenceDriver(register: IconSvgProps['register'], phases: string[], resting: string, ...controls: LegacyAnimationControls[]) {
+export function useSequenceDriver(register: IconSvgProps['register'], phases: (string | string[] | number)[], resting: string | string[], ...controls: LegacyAnimationControls[]) {
+  controls.forEach(captureControls);
   const current = React.useRef(controls);
   current.current = controls;
   const currentPhases = React.useRef(phases);
@@ -26,15 +28,32 @@ export function useSequenceDriver(register: IconSvgProps['register'], phases: st
   const currentResting = React.useRef(resting);
   currentResting.current = resting;
   const play = React.useRef<Promise<void> | null>(null);
+  const playback = React.useRef<AbortController | null>(null);
   React.useLayoutEffect(() => {
     const driver: IconDriver = {
       async play(signal) {
         if (signal.aborted) return;
+        playback.current?.abort();
+        const parentSignal = signal;
+        const token = new AbortController();
+        playback.current = token;
+        const cancel = () => token.abort();
+        parentSignal.addEventListener('abort', cancel, { once: true });
+        signal = token.signal;
         const completed = (async () => {
-          for (const phase of currentPhases.current) {
-            if (signal.aborted) break;
-            await Promise.all(current.current.map(control => control.start(phase)));
-          }
+          const timeline: TimelinePhase[] = [];
+          try {
+            for (const name of currentPhases.current) {
+              if (signal.aborted) break;
+              const phase = typeof name === 'number' ? { tracks: [], duration: name } : createPhase(current.current, Array.isArray(name) ? name : [name]);
+              timeline.push(phase);
+              await playPhase(phase, false, signal);
+            }
+            for (const phase of [...timeline].reverse()) {
+              if (signal.aborted) break;
+              await playPhase(phase, true, signal);
+            }
+          } finally { disposePhases(timeline); }
         })();
         play.current = completed;
         let onAbort: (() => void) | undefined;
@@ -43,12 +62,12 @@ export function useSequenceDriver(register: IconSvgProps['register'], phases: st
             onAbort = () => { current.current.forEach(control => control.stop()); resolve(); };
             signal.addEventListener('abort', onAbort, { once: true });
           })]);
-        } finally { if (onAbort) signal.removeEventListener('abort', onAbort); if (play.current === completed) play.current = null; }
+        } finally { parentSignal.removeEventListener('abort', cancel); if (playback.current === token) playback.current = null; if (onAbort) signal.removeEventListener('abort', onAbort); if (play.current === completed) play.current = null; }
       },
-      reset() { current.current.forEach(control => { control.stop(); control.set(currentResting.current); }); },
+      reset() { playback.current?.abort(); current.current.forEach((control, index) => { control.stop(); const resting = currentResting.current; control.set(Array.isArray(resting) ? resting[index]! : resting); }); },
     };
     register(driver);
-    return () => { current.current.forEach(control => control.stop()); register(null); };
+    return () => { playback.current?.abort(); current.current.forEach(control => control.stop()); register(null); };
   }, [register]);
 }
 

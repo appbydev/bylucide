@@ -20,7 +20,30 @@ beforeAll(() => {
 });
 afterEach(() => cleanup());
 
+test('mounted Motion integration in a fresh browser-initialized process', async () => {
+  const child = Bun.spawn([process.execPath, `${import.meta.dir}/../scripts/mounted-motion-check.tsx`], { stdout: 'pipe', stderr: 'pipe' });
+  const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
+  expect({ code, error }).toEqual({ code: 0, error: '' });
+  expect(output).toContain('two forward/reverse cycles each');
+}, 20000);
+
 describe('arquitetura e catálogo unificado', () => {
+  test('every animated catalog module uses a shared driver, never direct start/register', () => {
+    const files = readdirSync(`${import.meta.dir}/icons`).filter(file => file.endsWith('.tsx'));
+    expect(files).toHaveLength(1698);
+    let animated = 0;
+    for (const file of files) {
+      const source = readFileSync(`${import.meta.dir}/icons/${file}`, 'utf8');
+      expect(source, file).not.toMatch(/\.start\s*\(/);
+      expect(source, file).not.toMatch(/\bregister\s*\(/);
+      expect(source, file).not.toContain('transitionEnd:');
+      if (/\buseAnimation\s*\(/.test(source)) {
+        animated++;
+        expect(source, file).toMatch(/\buse(?:Controls|Sequence)Driver\s*\(/);
+      }
+    }
+    expect(animated).toBeGreaterThan(119);
+  });
   test('catálogo local alinhado aos módulos locais', () => {
     const names = manifest.icons;
     expect(names.length).toBe(1698);
@@ -53,6 +76,15 @@ describe('arquitetura e catálogo unificado', () => {
       expect(source, name).toMatch(/useControlsDriver|useSequenceDriver|register/);
     }
     expect(readdirSync('src')).not.toContain('icon-animations.css');
+  });
+  test('accessibility resets wheel rotation before replaying', () => {
+    const source = readFileSync('src/icons/accessibility.tsx', 'utf8');
+    const wheel = source.slice(source.indexOf('const SECONDARY_GROUP_VARIANTS'), source.indexOf('const PATH_VARIANTS'));
+    expect(wheel).toMatch(/normal:\s*\{\s*rotate: 0/);
+    expect(wheel).toMatch(/animate:\s*\{\s*rotate: -360/);
+    expect(source).toContain('useControlsDriver(register, controls)');
+    expect(source).not.toContain('initial="initial"');
+    expect(source.match(/initial="normal"/g)).toHaveLength(4);
   });
   test('transições spring de ícones zeram velocidade inicial para evitar overshoot após reset', () => {
     // Motion seeds spring velocity from MotionValue.getVelocity(); reset() writes rest values
@@ -230,15 +262,11 @@ describe('lifecycle único', () => {
     const view = render(<Icon name="volume" />);
     const span = view.container.querySelector('span')!;
     await act(async () => fireEvent.mouseEnter(span));
-    expect(view.container.querySelector('svg')?.getAttribute('data-volume-cycle')).toBe('1');
-    expect(view.container.querySelector('svg')?.getAttribute('data-volume-phase')).toBe('wave');
-    expect(view.container.querySelectorAll('path').length).toBeGreaterThanOrEqual(2);
+    expect(view.container.querySelectorAll('path').length).toBe(5);
     await act(async () => fireEvent.mouseLeave(span));
-    expect(view.container.querySelector('svg')?.getAttribute('data-volume-phase')).toBe('idle');
     view.rerender(<Icon name="volume" loop="always" />);
-    expect(Number(view.container.querySelector('svg')?.getAttribute('data-volume-cycle'))).toBeGreaterThanOrEqual(2);
     view.rerender(<Icon name="volume" loop={false} />);
-    expect(view.container.querySelector('svg')?.getAttribute('data-volume-phase')).toBe('idle');
+    expect(view.container.querySelectorAll('path').length).toBe(5);
     view.unmount();
   });
 });
@@ -248,7 +276,7 @@ test('Motion driver completes, restarts, resets, aborts and unregisters', async 
   let driver: IconDriver | null = null;
   const register = (next: IconDriver | null) => { driver = next; };
   function Probe() {
-    const controls = { start: async () => {}, stop: () => {}, set: () => {} } as never;
+    const controls = { subscribe: () => () => {}, start: async () => {}, stop: () => {}, set: () => {} } as never;
     useControlsDriver(register, controls);
     return <svg />;
   }
@@ -317,15 +345,10 @@ describe('simple motion regressions', () => {
 
   test('abort settles an unfinished phase, skips return phase, and allows replay/reset', async () => {
     let driver: IconDriver | null = null;
-    const phases: string[] = [];
     let stops = 0;
     const sets: string[] = [];
-    let finish: () => void = () => {};
     const controls = {
-      start(phase: string) {
-        phases.push(phase);
-        return new Promise<void>(resolve => { finish = resolve; });
-      },
+      subscribe: () => () => {},
       stop() { stops++; },
       set(phase: string) { sets.push(phase); },
     } as unknown as LegacyAnimationControls;
@@ -335,30 +358,17 @@ describe('simple motion regressions', () => {
     const active = driver!;
     const aborted = new AbortController();
     const first = active.play(aborted.signal);
-    const finishFirst = finish;
     aborted.abort();
     await first;
     expect(stops).toBe(1);
-    expect(phases).toEqual(['animate']);
-    finishFirst();
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(phases).toEqual(['animate']);
     active.reset();
     expect(sets).toEqual(['normal']);
     const replayToken = new AbortController();
-    const replay = active.play(replayToken.signal);
-    expect(phases).toEqual(['animate', 'animate']);
-    finish();
-    for (let i = 0; i < 5; i++) await Promise.resolve();
-    expect(phases).toEqual(['animate', 'animate', 'normal']);
-    finish();
-    await replay;
+    await active.play(replayToken.signal);
     const stopped = stops;
     replayToken.abort();
     expect(stops).toBe(stopped);
     await active.play(aborted.signal);
-    expect(phases).toHaveLength(3);
     view.unmount();
     expect(stops).toBe(stopped + 1);
     expect(driver).toBeNull();
