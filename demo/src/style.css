@@ -1,3 +1,21 @@
+/* Catalogo (bylucide): editorial, o icone e o heroi. Personalidade por variaveis, escopada por data-app. */
+[data-app="catalogo"] {
+  --cat-accent: oklch(0.42 0.04 280);
+  --cat-accent-ink: oklch(0.99 0 0);
+  --cat-radius: 0.5rem;
+  --cat-control-h: 2.75rem;
+  --cat-search-h: 3rem;
+  --cat-tile-border: 0;
+  --cat-tile-bg: var(--muted);
+  --cat-tile-radius: 0.75rem;
+  --cat-tile-hover: var(--accent);
+  --cat-specimen-radius: 1.25rem;
+  --cat-specimen-shadow: none;
+  --cat-icon-radius: 50%;
+  --cat-glyph-scale: 1.15;
+  --cat-pulse: oklch(0.42 0.04 280);
+}
+
 :root {
   color-scheme: light dark;
   --radius: 0.75rem;
@@ -173,12 +191,12 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: var(--cat-control-h);
+  background: var(--cat-accent);
+  color: var(--cat-accent-ink);
   padding: 0 1.25rem;
   border: 0;
-  border-radius: 0.5rem;
-  background: var(--primary);
-  color: var(--primary-foreground);
+  border-radius: var(--cat-radius);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -259,8 +277,9 @@ a {
   gap: 1.5rem;
   padding: 3rem 1.5rem;
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: var(--cat-surface-border);
+  border-radius: var(--cat-specimen-radius);
+  box-shadow: var(--cat-specimen-shadow);
 }
 
 .specimen-icon {
@@ -268,7 +287,7 @@ a {
   place-items: center;
   width: 9rem;
   height: 9rem;
-  border-radius: 50%;
+  border-radius: var(--cat-icon-radius);
   background: var(--muted);
   color: var(--foreground);
 }
@@ -335,11 +354,11 @@ a {
   align-items: center;
   gap: 0.75rem;
   flex: 1 1 18rem;
-  min-height: 48px;
+  min-height: var(--cat-search-h);
   padding: 0 0.5rem 0 0.875rem;
   background: var(--card);
   border: 1px solid var(--input);
-  border-radius: 0.5rem;
+  border-radius: var(--cat-radius);
   color: var(--muted-foreground);
   transition: border-color var(--duration-fast);
 }
@@ -468,8 +487,8 @@ a {
 }
 
 .segmented button.selected {
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--cat-accent);
+  color: var(--cat-accent-ink);
 }
 
 .filters {
@@ -501,9 +520,9 @@ a {
 }
 
 .filters button.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--cat-accent);
+  border-color: var(--cat-accent);
+  color: var(--cat-accent-ink);
 }
 
 .filters sup {
@@ -532,17 +551,16 @@ a {
   min-width: 0;
   min-height: 7rem;
   padding: 1rem 0.5rem;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--cat-tile-bg);
+  border: var(--cat-tile-border);
+  border-radius: var(--cat-tile-radius);
   content-visibility: auto;
   contain-intrinsic-size: auto 7rem;
   transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 
 .tile:hover {
-  background: var(--accent);
-  border-color: var(--input);
+  background: var(--cat-tile-hover);
 }
 
 .glyph {
@@ -550,6 +568,8 @@ a {
   place-items: center;
   height: 3rem;
   color: var(--foreground);
+  transform: scale(1);
+  transition: transform var(--duration-base) var(--ease-out), color var(--duration-fast);
   transition: color var(--duration-fast);
 }
 
@@ -562,6 +582,7 @@ a {
 .tile:focus-within .glyph,
 .tile[data-copied] .glyph {
   color: var(--link);
+  transform: scale(var(--cat-glyph-scale, 1));
 }
 
 .icon-name {
@@ -660,4 +681,34 @@ a {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.pulse-mark {
+  display: block;
+  width: min(15rem, 100%);
+  height: 1.5rem;
+  margin: 0 0 1.25rem;
+  overflow: visible;
+}
+
+.pulse-line {
+  fill: none;
+  stroke: var(--cat-pulse);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: pulse-draw 1.6s var(--ease-out) 0.2s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-draw {
+  to { stroke-dashoffset: 0; }
 }
