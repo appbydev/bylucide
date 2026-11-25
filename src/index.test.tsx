@@ -172,9 +172,19 @@ describe('arquitetura e catálogo unificado', () => {
       const html = renderToStaticMarkup(<Icon name={name} size={34} strokeWidth={3} color="purple" loop={false} />);
       expect(html).toContain('<svg');
       expect(html).toContain('data-icon="' + name + '"');
+      expect(html).toContain('data-icon-name="' + name + '"');
       expect(html).toMatch(/stroke-width="[0-9.]+"/);
       expect(html).toContain('width="34"');
     }
+  });
+  test('data-icon do chamador vence (inline-start do shadcn) e o nome fica em data-icon-name', () => {
+    const html = renderToStaticMarkup(<Icon name="download" data-icon="inline-start" />);
+    expect(html).toContain('data-icon="inline-start"');
+    expect(html).toContain('data-icon-name="download"');
+  });
+  test('file-stack tem path de arco válido', () => {
+    const html = renderToStaticMarkup(<Icon name="file-stack" loop={false} />);
+    expect(html).toContain('a2 2 0 0 1-2-2V2');
   });
   test('fallback Lucide, acessibilidade, refs e props HTML', () => {
     let clicks = 0;

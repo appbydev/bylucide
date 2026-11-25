@@ -67557,6 +67557,7 @@ var IconShell = React8.forwardRef(function IconShell2({ name, svg: Svg, size = 2
       if (presentDriver.current === driver) driver.reset();
     };
   }, [driver, visible, reduced, loop, hovered]);
+  const userDataIcon = rest["data-icon"];
   const rootProps = {
     ...rest,
     ref: rootRef,
@@ -67565,7 +67566,8 @@ var IconShell = React8.forwardRef(function IconShell2({ name, svg: Svg, size = 2
     stroke: rest.stroke ?? color2,
     strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
     className: ["lucide", `lucide-${name}`, className].filter(Boolean).join(" "),
-    "data-icon": name,
+    "data-icon": userDataIcon ?? name,
+    "data-icon-name": name,
     "aria-hidden": rest["aria-hidden"] ?? (label ? void 0 : true),
     role: rest.role ?? (label ? "img" : void 0),
     style,
@@ -87417,7 +87419,7 @@ function IconSvg631({ size, color: color2, strokeWidth, register }) {
   const controls = useAnimation();
   useControlsDriver(register, controls);
   return /* @__PURE__ */ jsxs604(SvgRoot, { style: { color: color2, overflow: "hidden" }, fill: "none", height: size, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth, viewBox: "0 0 24 24", width: size, xmlns: "http://www.w3.org/2000/svg", children: [
-    /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M21 7h-3a2 0 0 1-2-2V2", variants: {
+    /* @__PURE__ */ jsx637(motion2.path, { animate: controls, d: "M21 7h-3a2 2 0 0 1-2-2V2", variants: {
       normal: { translateX: 0, translateY: 0 },
       animate: { translateX: -1, translateY: 1 }
     } }),

@@ -77,7 +77,10 @@ export const IconShell = React.forwardRef<
     return () => { token.abort(); if (controller.current === token) controller.current = null; if (presentDriver.current === driver) driver.reset(); };
   }, [driver, visible, reduced, loop, hovered]);
 
-  const rootProps: React.ComponentPropsWithRef<'svg'> & { 'data-icon': string } = {
+  // A caller's data-icon (shadcn uses inline-start / inline-end for button padding) wins;
+  // the glyph name is always available as data-icon-name and the lucide-<name> class.
+  const userDataIcon = (rest as Record<string, unknown>)['data-icon'] as string | undefined;
+  const rootProps: React.ComponentPropsWithRef<'svg'> & { 'data-icon': string; 'data-icon-name': string } = {
     ...rest,
     ref: rootRef,
     width: rest.width ?? size,
@@ -85,7 +88,8 @@ export const IconShell = React.forwardRef<
     stroke: rest.stroke ?? color,
     strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
     className: ['lucide', `lucide-${name}`, className].filter(Boolean).join(' '),
-    'data-icon': name,
+    'data-icon': userDataIcon ?? name,
+    'data-icon-name': name,
     'aria-hidden': rest['aria-hidden'] ?? (label ? undefined : true),
     role: rest.role ?? (label ? 'img' : undefined),
     style,
