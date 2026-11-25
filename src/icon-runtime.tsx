@@ -1,7 +1,6 @@
 'use client';
 import * as React from 'react';
-import { icons as lucideIcons, type LucideIcon } from 'lucide-react';
-import { lucideSymbols } from './lucide-catalog';
+import type { LucideIcon } from 'lucide-react';
 
 import type { IconProps, IconSvg, IconDriver, IconSvgProps } from './types';
 
@@ -13,16 +12,16 @@ import { useHover } from './hover';
 // Follows prefers-reduced-motion by default; reducedMotion="ignore" forces animation (demos only).
 // loop="hover" listens to the nearest interactive ancestor (trigger="parent") so a whole
 // button, menu item or option animates its icon; trigger="self" keeps glyph-only hover.
-export const IconShell = React.forwardRef<
+export const IconShell = /*#__PURE__*/ React.forwardRef<
   SVGSVGElement,
-  IconProps & { name: string; svg?: IconSvg }
+  IconProps & { name: string; svg?: IconSvg; fallback?: LucideIcon }
 >(function IconShell(
-  { name, svg: Svg, size = 24, color = 'currentColor', strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = 'hover', reducedMotion = 'system', trigger = 'parent', onMouseEnter, onMouseLeave, style, ...rest },
+  { name, svg: Svg, fallback, size = 24, color = 'currentColor', strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = 'hover', reducedMotion = 'system', trigger = 'parent', onMouseEnter, onMouseLeave, style, ...rest },
   ref,
 ) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
-  const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
-  const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
+  // Resolved by the caller (named export or <Icon name>), so a named import never pulls the full catalog.
+  const staticIcon = fallback;
   const [visible, setVisible] = React.useState(true);
   const [element, setElement] = React.useState<SVGSVGElement | null>(null);
   const { hovered, setHovered, bound } = useHover(loop === 'hover' ? element : null, trigger);
