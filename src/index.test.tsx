@@ -262,7 +262,7 @@ describe('lifecycle único', () => {
       expect(listeners.size).toBe(0);
     } finally { Object.defineProperty(window, 'matchMedia', { configurable: true, value: original }); }
   });
-  test('padrão ignora redução de movimento; system exige opt-in para fallback', async () => {
+  test('padrão segue redução de movimento; ignore força a animação', async () => {
     const originalMedia = window.matchMedia;
     const originalIcon = iconRegistry['arrow-down'];
     let plays = 0;
@@ -281,12 +281,65 @@ describe('lifecycle único', () => {
     try {
       const view = render(<Icon name="arrow-down" loop="always" />);
       await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
-      expect(plays).toBeGreaterThan(0);
-      expect(view.container.querySelector('svg[data-animated="true"]')).toBeTruthy();
-      view.rerender(<Icon name="arrow-down" loop="always" reducedMotion="system" />);
+      expect(plays).toBe(0);
       expect(view.container.querySelector('svg[data-animated="true"]')).toBeNull();
       expect(view.container.querySelector('svg')).toBeTruthy();
+      view.rerender(<Icon name="arrow-down" loop="always" reducedMotion="ignore" />);
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+      expect(plays).toBeGreaterThan(0);
+      expect(view.container.querySelector('svg[data-animated="true"]')).toBeTruthy();
       view.unmount();
+    } finally {
+      iconRegistry['arrow-down'] = originalIcon!;
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMedia });
+    }
+  });
+  test('hover no controle pai anima o ícone; trigger="self" e disabled não', async () => {
+    const originalIcon = iconRegistry['arrow-down'];
+    let plays = 0;
+    const Animated = ({ register }: IconSvgProps) => {
+      React.useLayoutEffect(() => {
+        register({ play: () => new Promise<void>(resolve => { plays++; setTimeout(resolve, 5); }), reset() {} });
+        return () => register(null);
+      }, [register]);
+      return <SvgRoot />;
+    };
+    iconRegistry['arrow-down'] = Animated;
+    const wait = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+    const originalMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+      matches: query === '(hover: hover)', media: query, addEventListener() {}, removeEventListener() {},
+    }) });
+    try {
+      const view = render(<button type="button">Baixar <span><Icon name="arrow-down" /></span></button>);
+      await wait();
+      expect(plays).toBe(0);
+      const button = view.container.querySelector('button')!;
+      fireEvent.pointerEnter(button, { pointerType: 'mouse' });
+      await wait();
+      expect(plays).toBeGreaterThan(0);
+      fireEvent.pointerLeave(button, { pointerType: 'mouse' });
+      await wait();
+      const stopped = plays;
+      await wait();
+      expect(plays).toBe(stopped);
+      view.unmount();
+
+      plays = 0;
+      const self = render(<button type="button" data-icon-trigger="self">Baixar <Icon name="arrow-down" /></button>);
+      await wait();
+      fireEvent.pointerEnter(self.container.querySelector('button')!, { pointerType: 'mouse' });
+      await wait();
+      expect(plays).toBe(0);
+      self.unmount();
+
+      plays = 0;
+      const disabled = render(<button type="button" disabled>Baixar <Icon name="arrow-down" /></button>);
+      await wait();
+      fireEvent.pointerEnter(disabled.container.querySelector('button')!, { pointerType: 'mouse' });
+      await wait();
+      expect(plays).toBe(0);
+      disabled.unmount();
     } finally {
       iconRegistry['arrow-down'] = originalIcon!;
       Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMedia });

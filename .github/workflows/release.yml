@@ -1,0 +1,37 @@
+name: "🏷️ CI — Versionamento ByLucide"
+# Versiona cada push na main e nos deploys/** (regras em scripts/ci/release-version.sh).
+# Cada branch tem sua própria sequência de tags: v1.2.3 na main, <nome>/v1.2.3 nos deploys/**.
+# Na main o bump também é gravado no package.json (commit "chore(release): vX.Y.Z").
+# Conventional Commits decidem o bump: feat! -> major, feat -> minor, fix/refactor/perf -> patch;
+# só chore/ci/docs/style/test = sem release. Branch patch/** ou commit "patch:"/"[patch]" força patch.
+# Mudar a "version" do package.json à mão num commit vira versão manual.
+# O commit de bump e a tag usam o GITHUB_TOKEN; commits dele não disparam outros workflows.
+on:
+    push:
+        branches: ["main", "deploys/**"]
+permissions:
+    contents: write
+concurrency:
+    group: release-${{ github.ref_name }}
+    cancel-in-progress: false
+jobs:
+    version:
+        name: "🏷️ Versionamento automático"
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+        steps:
+            - name: "📥 Checkout do código"
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - name: "🏷️ Calcular versão, gravar bump, criar tag e release"
+              id: release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_COMMIT_BUMP: ${{ github.ref_name == 'main' }}
+              run: bash scripts/ci/release-version.sh apply
+            - name: "📝 Resumo"
+              if: always()
+              run: |
+                  echo "Modo: ${{ steps.release.outputs.mode }} · Tag: ${{ steps.release.outputs.tag || '-' }}" >> "$GITHUB_STEP_SUMMARY"

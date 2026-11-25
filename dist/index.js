@@ -6,7 +6,7 @@ var __export = (target, all) => {
 };
 
 // src/index.tsx
-import * as React6 from "react";
+import * as React10 from "react";
 
 // src/icon-manifest.json
 var icon_manifest_default = {
@@ -17694,7 +17694,7 @@ var useAnimation = useAnimationControls;
 var motion2 = motion;
 
 // src/icon-runtime.tsx
-import * as React4 from "react";
+import * as React8 from "react";
 
 // node_modules/lucide-react/dist/esm/icons/index.mjs
 var icons_exports = {};
@@ -67196,6 +67196,49 @@ var lucideSymbols = {
   "zoom-out": "ZoomOut"
 };
 
+// src/svg/root.tsx
+import * as React4 from "react";
+import { jsxs as jsxs2 } from "react/jsx-runtime";
+var SvgRootContext = React4.createContext({});
+function SvgRoot({ children, ...props }) {
+  const { children: extraChildren, ...shell } = React4.useContext(SvgRootContext);
+  return /* @__PURE__ */ jsxs2(
+    "svg",
+    {
+      ...props,
+      ...shell,
+      className: [props.className, shell.className].filter(Boolean).join(" "),
+      style: { ...props.style, ...shell.style },
+      children: [
+        children,
+        extraChildren
+      ]
+    }
+  );
+}
+function MotionSvgRoot({
+  children,
+  ...props
+}) {
+  const { children: extraChildren, ...shell } = React4.useContext(SvgRootContext);
+  return /* @__PURE__ */ jsxs2(
+    motion2.svg,
+    {
+      ...props,
+      ...shell,
+      className: [props.className, shell.className].filter(Boolean).join(" "),
+      style: { ...props.style, ...shell.style },
+      children: [
+        children,
+        extraChildren
+      ]
+    }
+  );
+}
+
+// src/driver.ts
+import * as React5 from "react";
+
 // src/reversible-timeline.ts
 var subscribers = /* @__PURE__ */ new WeakMap();
 function captureControls(control) {
@@ -67274,37 +67317,21 @@ function disposePhases(phases) {
   phases.forEach((phase) => phase.tracks.forEach((track) => track.animation.stop()));
 }
 
-// src/icon-runtime.tsx
-import { jsx as jsx6, jsxs as jsxs2 } from "react/jsx-runtime";
-var SvgRootContext = React4.createContext({});
-function SvgRoot({ children, ...props }) {
-  const { children: extraChildren, ...shell } = React4.useContext(SvgRootContext);
-  return /* @__PURE__ */ jsxs2("svg", { ...props, ...shell, className: [props.className, shell.className].filter(Boolean).join(" "), style: { ...props.style, ...shell.style }, children: [
-    children,
-    extraChildren
-  ] });
-}
-function MotionSvgRoot({ children, ...props }) {
-  const { children: extraChildren, ...shell } = React4.useContext(SvgRootContext);
-  return /* @__PURE__ */ jsxs2(motion2.svg, { ...props, ...shell, className: [props.className, shell.className].filter(Boolean).join(" "), style: { ...props.style, ...shell.style }, children: [
-    children,
-    extraChildren
-  ] });
-}
+// src/driver.ts
 function useControlsDriver(register, ...controls) {
   useSequenceDriver(register, ["animate"], "normal", ...controls);
 }
 function useSequenceDriver(register, phases, resting, ...controls) {
   controls.forEach(captureControls);
-  const current = React4.useRef(controls);
+  const current = React5.useRef(controls);
   current.current = controls;
-  const currentPhases = React4.useRef(phases);
+  const currentPhases = React5.useRef(phases);
   currentPhases.current = phases;
-  const currentResting = React4.useRef(resting);
+  const currentResting = React5.useRef(resting);
   currentResting.current = resting;
-  const play = React4.useRef(null);
-  const playback = React4.useRef(null);
-  React4.useLayoutEffect(() => {
+  const play = React5.useRef(null);
+  const playback = React5.useRef(null);
+  React5.useLayoutEffect(() => {
     const driver = {
       async play(signal) {
         if (signal.aborted) return;
@@ -67366,6 +67393,9 @@ function useSequenceDriver(register, phases, resting, ...controls) {
     };
   }, [register]);
 }
+
+// src/accessibility.ts
+import * as React6 from "react";
 var subscribe = (notify) => {
   if (typeof window === "undefined" || !window.matchMedia) return () => {
   };
@@ -67375,16 +67405,97 @@ var subscribe = (notify) => {
 };
 var snapshot = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 function useReduced() {
-  return React4.useSyncExternalStore(subscribe, snapshot, () => false);
+  return React6.useSyncExternalStore(subscribe, snapshot, () => false);
 }
-var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 24, color: color2 = "currentColor", strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = "hover", reducedMotion = "ignore", onMouseEnter, onMouseLeave, style, ...rest }, ref) {
+
+// src/hover.ts
+import * as React7 from "react";
+var TRIGGER_SELECTOR = [
+  "[data-icon-trigger]",
+  "button",
+  "a[href]",
+  "summary",
+  "label",
+  '[role="button"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[role="menuitemcheckbox"]',
+  '[role="menuitemradio"]',
+  '[role="option"]',
+  '[role="tab"]',
+  '[role="switch"]',
+  '[role="checkbox"]',
+  '[role="radio"]',
+  '[role="combobox"]',
+  '[data-slot="select-trigger"]'
+].join(",");
+function findTrigger(icon) {
+  const host = icon.parentElement?.closest(TRIGGER_SELECTOR) ?? null;
+  if (!host || host.dataset.iconTrigger === "self") return null;
+  return host;
+}
+var canHover = () => typeof window === "undefined" || !window.matchMedia || window.matchMedia("(hover: hover)").matches;
+var isDisabled = (el) => el.matches(":disabled") || el.getAttribute("aria-disabled") === "true" || el.hasAttribute("data-disabled");
+function useHover(element, trigger = "parent") {
+  const [hovered, setHovered] = React7.useState(false);
+  const [bound, setBound] = React7.useState(false);
+  React7.useEffect(() => {
+    if (!element || trigger !== "parent") return;
+    const host = findTrigger(element);
+    if (!host) return;
+    setBound(true);
+    let pointer = false;
+    let focus = false;
+    const sync = () => setHovered((pointer || focus) && !isDisabled(host));
+    const enter = (event) => {
+      if (event.pointerType === "touch" || !canHover()) return;
+      pointer = true;
+      sync();
+    };
+    const leave = () => {
+      pointer = false;
+      sync();
+    };
+    const focusIn = () => {
+      let visible = true;
+      try {
+        visible = host.matches(":focus-visible") || host.matches("[data-highlighted]");
+      } catch {
+      }
+      focus = visible;
+      sync();
+    };
+    const focusOut = (event) => {
+      if (event.relatedTarget instanceof Node && host.contains(event.relatedTarget)) return;
+      focus = false;
+      sync();
+    };
+    host.addEventListener("pointerenter", enter);
+    host.addEventListener("pointerleave", leave);
+    host.addEventListener("focusin", focusIn);
+    host.addEventListener("focusout", focusOut);
+    return () => {
+      host.removeEventListener("pointerenter", enter);
+      host.removeEventListener("pointerleave", leave);
+      host.removeEventListener("focusin", focusIn);
+      host.removeEventListener("focusout", focusOut);
+      setHovered(false);
+      setBound(false);
+    };
+  }, [element, trigger]);
+  return { hovered, setHovered, bound };
+}
+
+// src/icon-runtime.tsx
+import { jsx as jsx6 } from "react/jsx-runtime";
+var IconShell = React8.forwardRef(function IconShell2({ name, svg: Svg, size = 24, color: color2 = "currentColor", strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = "hover", reducedMotion = "system", trigger = "parent", onMouseEnter, onMouseLeave, style, ...rest }, ref) {
   const reduced = useReduced() && reducedMotion !== "ignore";
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : void 0;
   const staticIcon = symbol ? icons_exports[symbol] : void 0;
-  const [hovered, setHovered] = React4.useState(false);
-  const [visible, setVisible] = React4.useState(true);
-  const [element, setElement] = React4.useState(null);
-  const rootRef = React4.useCallback((node) => {
+  const [visible, setVisible] = React8.useState(true);
+  const [element, setElement] = React8.useState(null);
+  const { hovered, setHovered, bound } = useHover(loop === "hover" ? element : null, trigger);
+  const rootRef = React8.useCallback((node) => {
     setElement(node);
     if (typeof ref === "function") {
       const cleanup = ref(node);
@@ -67394,21 +67505,21 @@ var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 2
       };
     } else if (ref) ref.current = node;
   }, [ref]);
-  const [driver, setDriver] = React4.useState(null);
-  const presentDriver = React4.useRef(null);
-  const registerDriver = React4.useCallback((next) => {
+  const [driver, setDriver] = React8.useState(null);
+  const presentDriver = React8.useRef(null);
+  const registerDriver = React8.useCallback((next) => {
     presentDriver.current = next;
     setDriver(next);
   }, []);
-  const controller = React4.useRef(null);
+  const controller = React8.useRef(null);
   const label = rest["aria-label"] || rest["aria-labelledby"];
-  React4.useEffect(() => {
+  React8.useEffect(() => {
     if (!element || typeof IntersectionObserver === "undefined") return;
     const observer2 = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false));
     observer2.observe(element);
     return () => observer2.disconnect();
   }, [element]);
-  React4.useEffect(() => {
+  React8.useEffect(() => {
     if (!driver || !visible || reduced || loop === false || loop === "hover" && !hovered) {
       controller.current?.abort();
       controller.current = null;
@@ -67460,15 +67571,15 @@ var IconShell = React4.forwardRef(function IconShell2({ name, svg: Svg, size = 2
     style,
     children,
     onMouseEnter: (event) => {
-      setHovered(true);
+      if (!bound) setHovered(true);
       onMouseEnter?.(event);
     },
     onMouseLeave: (event) => {
-      setHovered(false);
+      if (!bound) setHovered(false);
       onMouseLeave?.(event);
     }
   };
-  const display = reduced && staticIcon ? React4.createElement(staticIcon, rootProps) : Svg ? /* @__PURE__ */ jsx6(Svg, { size, color: color2, strokeWidth, reduced, register: registerDriver }) : staticIcon ? React4.createElement(staticIcon, rootProps) : null;
+  const display = reduced && staticIcon ? React8.createElement(staticIcon, rootProps) : Svg ? /* @__PURE__ */ jsx6(Svg, { size, color: color2, strokeWidth, reduced, register: registerDriver }) : staticIcon ? React8.createElement(staticIcon, rootProps) : null;
   if (!display) return null;
   return /* @__PURE__ */ jsx6(SvgRootContext.Provider, { value: rootProps, children: display });
 });
@@ -123238,10 +123349,10 @@ var iconRegistry = {
 };
 
 // src/icon-factory.tsx
-import * as React5 from "react";
+import * as React9 from "react";
 import { jsx as jsx1705 } from "react/jsx-runtime";
 function createIcon(name) {
-  const Component5 = React5.forwardRef((props, ref) => /* @__PURE__ */ jsx1705(Icon2, { ...props, name, ref }));
+  const Component5 = React9.forwardRef((props, ref) => /* @__PURE__ */ jsx1705(Icon2, { ...props, name, ref }));
   Component5.displayName = name.split("-").map((part) => (part[0]?.toUpperCase() ?? "") + part.slice(1)).join("") + "Icon";
   return Component5;
 }
@@ -129703,7 +129814,7 @@ import { jsx as jsx1706 } from "react/jsx-runtime";
 function normalizeName(input) {
   return Object.hasOwn(lucideNames, input) ? lucideNames[input] : input;
 }
-var Icon2 = React6.forwardRef(function Icon3({ name = "", ...props }, ref) {
+var Icon2 = React10.forwardRef(function Icon3({ name = "", ...props }, ref) {
   const canonical = normalizeName(name);
   return /* @__PURE__ */ jsx1706(IconShell, { ...props, ref, name: canonical, svg: Object.hasOwn(iconRegistry, canonical) ? iconRegistry[canonical] : void 0 });
 });
