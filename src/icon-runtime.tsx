@@ -10,20 +10,22 @@ import { useSequenceDriver, useControlsDriver } from './driver';
 import { useReduced } from './accessibility';
 import { useHover } from './hover';
 
-// Animation is opt-out by design; consumers opt into OS preference with reducedMotion="system".
+// Follows prefers-reduced-motion by default; reducedMotion="ignore" forces animation (demos only).
+// loop="hover" listens to the nearest interactive ancestor (trigger="parent") so a whole
+// button, menu item or option animates its icon; trigger="self" keeps glyph-only hover.
 export const IconShell = React.forwardRef<
   SVGSVGElement,
   IconProps & { name: string; svg?: IconSvg }
 >(function IconShell(
-  { name, svg: Svg, size = 24, color = 'currentColor', strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = 'hover', reducedMotion = 'ignore', onMouseEnter, onMouseLeave, style, ...rest },
+  { name, svg: Svg, size = 24, color = 'currentColor', strokeWidth = 2, absoluteStrokeWidth = false, className, children, loop = 'hover', reducedMotion = 'system', trigger = 'parent', onMouseEnter, onMouseLeave, style, ...rest },
   ref,
 ) {
   const reduced = useReduced() && reducedMotion !== 'ignore';
   const symbol = Object.hasOwn(lucideSymbols, name) ? lucideSymbols[name] : undefined;
   const staticIcon = symbol ? (lucideIcons as Record<string, LucideIcon>)[symbol] : undefined;
-  const { hovered, setHovered } = useHover();
   const [visible, setVisible] = React.useState(true);
   const [element, setElement] = React.useState<SVGSVGElement | null>(null);
+  const { hovered, setHovered, bound } = useHover(loop === 'hover' ? element : null, trigger);
 
   const rootRef = React.useCallback((node: SVGSVGElement | null) => {
     setElement(node);
@@ -88,8 +90,8 @@ export const IconShell = React.forwardRef<
     role: rest.role ?? (label ? 'img' : undefined),
     style,
     children,
-    onMouseEnter: event => { setHovered(true); onMouseEnter?.(event); },
-    onMouseLeave: event => { setHovered(false); onMouseLeave?.(event); },
+    onMouseEnter: event => { if (!bound) setHovered(true); onMouseEnter?.(event); },
+    onMouseLeave: event => { if (!bound) setHovered(false); onMouseLeave?.(event); },
   };
   const display = reduced && staticIcon ? React.createElement(staticIcon, rootProps) : Svg ? <Svg size={size} color={color} strokeWidth={strokeWidth} reduced={reduced} register={registerDriver} /> : staticIcon ? React.createElement(staticIcon, rootProps) : null;
   if (!display) return null;

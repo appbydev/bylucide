@@ -74,14 +74,15 @@ export function Acoes() {
 | `color` | `string` | não definido | Cor passada ao SVG e aplicada ao `span`; sem valor, segue o estilo herdado do contexto. |
 | `strokeWidth` | `number` | `2` | Espessura do traço passada ao SVG. |
 | `loop` | `'hover' \| 'always' \| false` | `'hover'` | Controla a repetição da animação, quando houver implementação animada. |
-| `reducedMotion` | `'ignore' \| 'system'` | `'ignore'` | Por padrão força animações mesmo sob `prefers-reduced-motion: reduce`; use `'system'` para respeitar a preferência do usuário. |
+| `reducedMotion` | `'system' \| 'ignore'` | `'system'` | Respeita `prefers-reduced-motion: reduce` por padrão; `'ignore'` força a animação (use só em demos). |
+| `trigger` | `'parent' \| 'self'` | `'parent'` | Com `loop="hover"`, quem dispara a animação: o controle interativo mais próximo (botão, link, item de menu, opção de select, aba, `[data-icon-trigger]`) no hover com mouse e no foco por teclado, ou só o próprio ícone. |
 | `ref` | `React.Ref<HTMLSpanElement>` | não definido | Referência ao `span` externo, não ao SVG. |
 
 O elemento renderizado é um `span` com `display: inline-flex`, `vertical-align: middle` e `data-icon` com o nome normalizado. Eventos `onMouseEnter` e `onMouseLeave` fornecidos pelo consumidor são chamados junto com o controle interno do hover. Se nenhum SVG local ou estático puder ser resolvido, o componente retorna `null` (não cria `span`).
 
 ## Animação e acessibilidade
 
-- `loop="hover"` (padrão): repete enquanto o ponteiro estiver sobre o `span`; ao sair, interrompe e retorna ao estado normal.
+- `loop="hover"` (padrão): repete enquanto o controle pai estiver em hover (mouse ou caneta, nunca toque) ou com foco visível de teclado; ao sair, interrompe e retorna ao estado normal. Controles desabilitados não animam. Sem controle pai, reage ao ponteiro sobre o próprio ícone. `data-icon-trigger` em qualquer ancestral o torna o gatilho; `data-icon-trigger="self"` desliga o gatilho pelo pai naquele trecho.
 - `loop="always"`: repete enquanto o ícone estiver montado e apto a animar.
 - `loop={false}`: não inicia a animação; exibe a geometria do ícone. Para ícones estáticos de fallback, `loop` não produz animação.
 
@@ -94,7 +95,7 @@ Sem `aria-label` ou `aria-labelledby`, o `span` é decorativo por padrão (`aria
 <Icon name="plane" aria-label="Avião" />
 ```
 
-**Escolha deliberada de acesso:** sem `reducedMotion`, a biblioteca ignora `prefers-reduced-motion: reduce` para manter as animações disponíveis por padrão, inclusive sob essa preferência do navegador/OS. Para respeitar a preferência de acessibilidade, passe `reducedMotion="system"` explicitamente (por exemplo, numa aplicação que oferece essa opção ao usuário). Nesse modo, quando `prefers-reduced-motion: reduce` está ativo, o runtime não inicia a animação e usa o componente estático do `lucide-react` se existir. Quando não há equivalente estático, conserva a geometria local sem iniciar a animação. A preferência também é observada quando muda durante o uso.
+**Acessibilidade:** por padrão (`reducedMotion="system"`), quando `prefers-reduced-motion: reduce` está ativo, o runtime não inicia a animação e usa o componente estático do `lucide-react` se existir; sem equivalente estático, conserva a geometria local parada. A preferência é observada quando muda durante o uso. `reducedMotion="ignore"` força a animação e serve só para vitrines como o demo.
 
 ## Catálogo, aliases e criação de componentes
 

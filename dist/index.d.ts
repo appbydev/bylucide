@@ -7932,8 +7932,14 @@ type LucideProps = NamedIconProps;
 interface IconProps extends Omit<LucideProps$1, 'ref'> {
     name?: string;
     loop?: 'hover' | 'always' | false;
-    /** Defaults to 'ignore' (force animations); 'system' follows prefers-reduced-motion. */
+    /** Defaults to 'system' (follows prefers-reduced-motion); 'ignore' forces animations. */
     reducedMotion?: 'system' | 'ignore';
+    /**
+     * What starts a `loop="hover"` animation. 'parent' (default) uses the nearest interactive
+     * ancestor (button, link, menu item, option, tab, `[data-icon-trigger]`) plus keyboard focus;
+     * 'self' only reacts to the pointer over the icon itself.
+     */
+    trigger?: 'parent' | 'self';
 }
 
 declare function createIcon(name: string): IconComponent;
