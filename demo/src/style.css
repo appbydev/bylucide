@@ -1,10 +1,10 @@
 @import "tailwindcss" source("../");
-@import "@appby/ui/styles.css";
-@import "@appby/ui/themes/bylucide.css";
+@import "byui/styles.css";
+@import "byui/themes/bylucide.css";
 
 /*
  * Catalogo (bylucide demo): editorial, the icon is the hero.
- * Tokens, fonts, focus, selection and reduced motion come from @appby/ui and its bylucide theme.
+ * Tokens, fonts, focus, selection and reduced motion come from byui and its bylucide theme.
  * This file only holds the demo's own pieces: the page shell, the hero signature and the icon grid.
  */
 :root {

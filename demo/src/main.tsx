@@ -1,4 +1,4 @@
-import { ThemeProvider } from '@appby/ui/providers/theme-provider';
+import { ThemeProvider } from 'byui/providers/theme-provider';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';

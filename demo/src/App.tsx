@@ -1,8 +1,8 @@
-import { Button } from '@appby/ui/button';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@appby/ui/empty';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@appby/ui/input-group';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@appby/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@appby/ui/toggle-group';
+import { Button } from 'byui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from 'byui/empty';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from 'byui/input-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from 'byui/tabs';
+import { ToggleGroup, ToggleGroupItem } from 'byui/toggle-group';
 import { ArrowDownIcon, ArrowUpRightIcon, Icon, manifest, SearchIcon, XIcon } from 'bylucide';
 import { type CSSProperties, memo, useEffect, useMemo, useRef, useState } from 'react';
 
