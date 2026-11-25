@@ -1,8 +1,13 @@
-import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Icon, manifest } from 'bylucide';
+import { Button } from '@appby/ui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@appby/ui/empty';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@appby/ui/input-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@appby/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@appby/ui/toggle-group';
+import { ArrowDownIcon, ArrowUpRightIcon, Icon, manifest, SearchIcon, XIcon } from 'bylucide';
+import { type CSSProperties, memo, useEffect, useMemo, useRef, useState } from 'react';
 
 type Motion = 'hover' | 'always' | 'off';
-const groups = ['All icons', 'Arrows', 'Interface', 'Media', 'Nature', 'People', 'Objects'];
+const groups: [string, ...string[]] = ['All icons', 'Arrows', 'Interface', 'Media', 'Nature', 'People', 'Objects'];
 const belongs: Record<string, string[]> = {
   Arrows: ['arrow', 'chevron', 'corner', 'move', 'rotate', 'undo', 'redo', 'turn', 'triangle'],
   Interface: ['align', 'menu', 'search', 'settings', 'layout', 'panel', 'filter', 'check', 'x-', 'plus', 'minus'],
@@ -11,6 +16,16 @@ const belongs: Record<string, string[]> = {
   People: ['user', 'person', 'baby', 'heart', 'smile', 'hand', 'accessibility'],
   Objects: ['book', 'briefcase', 'box', 'car', 'clock', 'cup', 'gift', 'home', 'lightbulb', 'key'],
 };
+// Tab values become element ids, so they carry no spaces.
+const slug = (group: string) => group.toLowerCase().replace(/\s+/g, '-');
+const motionModes: { value: Motion; label: string }[] = [
+  { value: 'hover', label: 'On hover' },
+  { value: 'always', label: 'Always' },
+  { value: 'off', label: 'Off' },
+];
+// Real icons from the set, shown in the hero. Hover or focus one to preview it, select it to enlarge it.
+const featured: [string, ...string[]] = ['heart-pulse', 'bell', 'send', 'settings', 'audio-lines', 'rocket'];
+
 const visibilityListeners = new Map<Element, (visible: boolean) => void>();
 let visibilityObserver: IntersectionObserver | undefined;
 
@@ -19,7 +34,7 @@ function observeVisibility(element: Element, listener: (visible: boolean) => voi
     listener(true);
     return;
   }
-  visibilityObserver ??= new IntersectionObserver(entries => {
+  visibilityObserver ??= new IntersectionObserver((entries) => {
     for (const entry of entries) visibilityListeners.get(entry.target)?.(entry.isIntersecting);
   });
   visibilityListeners.set(element, listener);
@@ -34,11 +49,10 @@ function observeVisibility(element: Element, listener: (visible: boolean) => voi
   };
 }
 
+// The whole tile is the button, so bylucide animates its icon on hover and keyboard focus of the tile.
 const IconTile = memo(function IconTile({ name, motion }: { name: string; motion: Motion }) {
-  const tile = useRef<HTMLElement>(null);
+  const tile = useRef<HTMLButtonElement>(null);
   const timer = useRef<number>(0);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -46,19 +60,38 @@ const IconTile = memo(function IconTile({ name, motion }: { name: string; motion
     if (motion === 'always' && tile.current) return observeVisibility(tile.current, setVisible);
   }, [motion]);
   useEffect(() => () => window.clearTimeout(timer.current), []);
-  const playing = motion === 'always' ? visible : motion === 'hover' && (hovered || focused);
+  const loop = motion === 'hover' ? 'hover' : motion === 'always' && visible ? 'always' : false;
   const copy = () => {
-    navigator.clipboard?.writeText(name).then(() => {
-      setCopied(true);
-      window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setCopied(false), 1600);
-    }, () => {});
+    navigator.clipboard?.writeText(name).then(
+      () => {
+        setCopied(true);
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => setCopied(false), 1600);
+      },
+      () => {},
+    );
   };
-  return <article ref={tile} className="tile" data-copied={copied || undefined} onPointerEnter={() => setHovered(true)} onPointerLeave={() => setHovered(false)} onPointerCancel={() => setHovered(false)} onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}><div className="glyph"><Icon name={name} loop={playing ? 'always' : false} reducedMotion={motion === 'always' ? 'system' : 'ignore'}/></div><span className="icon-name">{name}</span><button className="copy" type="button" aria-label="Copy icon name" onClick={copy}><span className="copy-label" aria-hidden="true">{copied ? 'Copied' : 'Copy'}</span></button></article>
+  return (
+    <button ref={tile} type="button" className="tile" data-copied={copied || undefined} aria-label={`Copy ${name}`} onClick={copy}>
+      <span className="glyph">
+        <Icon name={name} loop={loop} reducedMotion={motion === 'always' ? 'system' : 'ignore'} />
+      </span>
+      <span className="icon-name">{name}</span>
+      <span className="copy-label" aria-hidden="true">
+        {copied ? 'Copied' : 'Copy'}
+      </span>
+    </button>
+  );
 });
 
 const IconGrid = memo(function IconGrid({ icons, motion }: { icons: string[]; motion: Motion }) {
-  return <div className="grid">{icons.map(name => <IconTile key={name} name={name} motion={motion}/>)}</div>;
+  return (
+    <div className="grid">
+      {icons.map((name) => (
+        <IconTile key={name} name={name} motion={motion} />
+      ))}
+    </div>
+  );
 });
 
 function App() {
@@ -66,22 +99,194 @@ function App() {
   const [group, setGroup] = useState('All icons');
   const [motion, setMotion] = useState<Motion>('hover');
   const [size, setSize] = useState(28);
-  const icons = useMemo(() => (manifest.icons as string[]).filter(name => name.includes(query.trim().toLowerCase()) && (group === 'All icons' || belongs[group]?.some(word => name.includes(word)))), [query, group]);
+  const [specimen, setSpecimen] = useState<string>(featured[0]);
+  const icons = useMemo(
+    () =>
+      (manifest.icons as string[]).filter(
+        (name) => name.includes(query.trim().toLowerCase()) && (group === 'All icons' || belongs[group]?.some((word) => name.includes(word))),
+      ),
+    [query, group],
+  );
   const total = (manifest.icons as string[]).length;
-  const clear = () => { setQuery(''); setGroup('All icons'); };
-  return <>
-    <header className="top"><div className="shell top-inner"><a className="brand" href="#">ByLucide</a><a className="link" href="https://github.com" target="_blank" rel="noreferrer">View on GitHub<span aria-hidden="true"> ↗</span></a></div></header>
-    <main>
-      <section className="hero"><div className="shell hero-inner"><div className="hero-copy"><h1><span className="line">Icons with</span><span className="line">a pulse.</span></h1><svg className="pulse-mark" viewBox="0 0 240 24" aria-hidden="true" focusable="false"><path className="pulse-line" d="M0 12 H72 L84 2 L98 22 L110 6 L122 12 H240" /></svg><p className="intro">{total.toLocaleString()} Lucide icons that move. Search the set, pick a size, and preview each animation before you ship it.</p><a className="button" href="#catalog">Browse the collection</a></div><div className="hero-art" aria-hidden="true"><div className="specimen"><div className="specimen-icon"><Icon name="sparkles" size={112} loop="always" reducedMotion="system"/></div><code>{'<Icon name="sparkles" loop="always" />'}</code></div></div></div></section>
-      <section className="shell catalog" id="catalog" aria-labelledby="catalog-title"><div className="catalog-head"><h2 id="catalog-title">Find your icon</h2><p className="count" aria-live="polite"><strong>{icons.length.toLocaleString()}</strong> of {total.toLocaleString()} icons</p></div>
-        <div className="toolbar"><div className="search"><Icon name="search" size={18}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search icons…" aria-label="Search icons" autoComplete="off" spellCheck={false}/>{query && <button type="button" className="clear" aria-label="Clear search" onClick={() => setQuery('')}><Icon name="x" size={16}/></button>}</div><label className="size-control"><span>Size</span><input type="range" min="18" max="48" value={size} onChange={e => setSize(+e.target.value)} aria-label="Icon size"/><output>{size}px</output></label></div>
-        <section className="motion-controls" aria-label="Motion settings"><div className="motion-copy"><h3>Motion preview</h3><p>{motion === 'hover' ? 'Hover over a card or focus its copy button to see its icon move.' : motion === 'always' ? 'Visible icons animate continuously. Reduced-motion preferences are respected.' : 'Icon animations are turned off.'}</p></div><div className="segmented" role="group" aria-label="Animation behavior">{(['hover', 'always', 'off'] as Motion[]).map(m => <button type="button" key={m} aria-pressed={motion === m} className={motion === m ? 'selected' : ''} onClick={() => setMotion(m)}>{m === 'hover' ? 'On card hover' : m === 'always' ? 'Always animate' : 'Animation off'}</button>)}</div></section>
-        <div className="filters" role="tablist" aria-label="Icon category">{groups.map((item, i) => <button type="button" key={item} role="tab" aria-selected={group === item} className={group === item ? 'active' : ''} onClick={() => setGroup(item)}>{item}{i === 0 && <sup>{total}</sup>}</button>)}</div>
-        {icons.length > 0 && <div style={{ '--icon-size': `${size}px` } as CSSProperties}><IconGrid icons={icons} motion={motion}/></div>}
-        {icons.length === 0 && <div className="empty" role="status"><Icon name="search" size={32} loop={false}/><h3>{query.trim() ? `No icons match “${query.trim()}”` : 'No icons in this category'}</h3><p>Check the spelling, try a shorter word, or browse another category.</p><button type="button" className="button" onClick={clear}>Clear search</button></div>}
-      </section>
-    </main>
-    <footer className="footer"><div className="shell footer-inner"><span>ByLucide, animated icons for React.</span><span>Icons by Lucide. © 2026</span></div></footer>
-  </>;
+  const clear = () => {
+    setQuery('');
+    setGroup('All icons');
+  };
+  return (
+    <>
+      <header className="border-b">
+        <div className="shell flex min-h-16 items-center justify-between">
+          <a className="font-heading text-xl font-semibold tracking-tight text-foreground no-underline" href={import.meta.env.BASE_URL}>
+            ByLucide
+          </a>
+          <a className="link" href="https://github.com" target="_blank" rel="noreferrer">
+            View on GitHub
+            <ArrowUpRightIcon size={16} />
+          </a>
+        </div>
+      </header>
+      <main>
+        <section className="border-b">
+          <div className="shell hero-inner">
+            <div className="flex min-w-0 flex-col items-start">
+              <h1 className="hero-title">
+                <span className="line">Icons with</span>
+                <span className="line">a pulse</span>
+              </h1>
+              <svg className="pulse-mark" viewBox="0 0 240 24" aria-hidden="true" focusable="false">
+                <path className="pulse-line" d="M0 12 H72 L84 2 L98 22 L110 6 L122 12 H240" />
+              </svg>
+              <p className="max-w-[44ch] text-lg text-muted-foreground">
+                {total.toLocaleString('en-US')} Lucide icons that move. Search the set, pick a size, and preview each animation before you ship it.
+              </p>
+              <Button asChild size="lg" className="mt-8">
+                <a href="#catalog">
+                  Browse the collection
+                  <ArrowDownIcon />
+                </a>
+              </Button>
+            </div>
+            <div className="specimen">
+              <div className="specimen-icon" aria-hidden="true">
+                <Icon key={specimen} name={specimen} size={112} loop="always" reducedMotion="system" />
+              </div>
+              <code className="max-w-full text-center text-[0.8125rem] text-muted-foreground [overflow-wrap:anywhere]">{`<Icon name="${specimen}" loop="always" />`}</code>
+              <ToggleGroup
+                type="single"
+                spacing={1}
+                value={specimen}
+                onValueChange={(value) => value && setSpecimen(value)}
+                aria-label="Preview icon"
+                className="flex-wrap justify-center"
+              >
+                {featured.map((name) => (
+                  <ToggleGroupItem
+                    key={name}
+                    value={name}
+                    aria-label={name}
+                    className="size-11 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                  >
+                    <Icon name={name} size={20} />
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+          </div>
+        </section>
+        <section className="shell catalog" id="catalog" aria-labelledby="catalog-title">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+            <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-tight">
+              Find your icon
+            </h2>
+            <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+              <strong className="font-semibold text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
+            </p>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <InputGroup className="h-12 flex-[1_1_18rem] bg-card">
+              <InputGroupAddon>
+                <SearchIcon size={18} />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                aria-label="Search icons"
+                autoComplete="off"
+                spellCheck={false}
+                className="text-base"
+              />
+              {query && (
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton size="icon-sm" aria-label="Clear search" onClick={() => setQuery('')}>
+                    <XIcon size={16} />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              )}
+            </InputGroup>
+            <label className="flex min-h-12 items-center gap-3 text-sm font-medium">
+              <span>Size</span>
+              <input className="size-range" type="range" min="18" max="48" value={size} onChange={(e) => setSize(+e.target.value)} aria-label="Icon size" />
+              <output className="min-w-[4ch] font-mono text-[0.8125rem] text-muted-foreground tabular-nums">{size}px</output>
+            </label>
+          </div>
+          <section
+            className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-(--radius-card) bg-muted p-4"
+            aria-label="Motion settings"
+          >
+            <div className="min-w-0 flex-[1_1_18rem]">
+              <h3 className="text-lg">Motion preview</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {motion === 'hover'
+                  ? 'Hover or focus a tile to see its icon move.'
+                  : motion === 'always'
+                    ? 'Visible icons animate continuously. Reduced-motion preferences are respected.'
+                    : 'Icon animations are turned off.'}
+              </p>
+            </div>
+            <ToggleGroup
+              type="single"
+              spacing={1}
+              value={motion}
+              onValueChange={(value) => value && setMotion(value as Motion)}
+              aria-label="Animation behavior"
+              className="rounded-(--radius-card) border bg-card p-1"
+            >
+              {motionModes.map((mode) => (
+                <ToggleGroupItem
+                  key={mode.value}
+                  value={mode.value}
+                  className="px-4 text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >
+                  {mode.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </section>
+          <Tabs
+            value={slug(group)}
+            onValueChange={(value) => setGroup(groups.find((item) => slug(item) === value) ?? groups[0])}
+            className="mt-6 flex-col gap-6"
+          >
+            <TabsList variant="line" aria-label="Icon category" className="filters">
+              {groups.map((item, i) => (
+                <TabsTrigger key={item} value={slug(item)} className="px-3">
+                  {item}
+                  {i === 0 && <span className="font-mono text-xs text-muted-foreground tabular-nums">{total}</span>}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value={slug(group)}>
+              {icons.length > 0 && (
+                <div style={{ '--icon-size': `${size}px` } as CSSProperties}>
+                  <IconGrid icons={icons} motion={motion} />
+                </div>
+              )}
+              {icons.length === 0 && (
+                <Empty role="status" className="border border-input py-16">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon" className="size-12">
+                      <SearchIcon size={24} loop={false} />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-2xl font-semibold [overflow-wrap:anywhere]">
+                      {query.trim() ? `No icons match “${query.trim()}”` : 'No icons in this category'}
+                    </EmptyTitle>
+                    <EmptyDescription className="text-base">Check the spelling, try a shorter word, or browse another category.</EmptyDescription>
+                  </EmptyHeader>
+                  <Button onClick={clear}>Clear search</Button>
+                </Empty>
+              )}
+            </TabsContent>
+          </Tabs>
+        </section>
+      </main>
+      <footer className="border-t">
+        <div className="shell flex flex-wrap justify-between gap-x-6 gap-y-2 py-6 text-sm text-muted-foreground">
+          <span>ByLucide, animated icons for React</span>
+          <span>Icons by Lucide, © 2026</span>
+        </div>
+      </footer>
+    </>
+  );
 }
 export default App;
