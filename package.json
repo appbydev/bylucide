@@ -19,7 +19,9 @@
     "generate:icons": "bun scripts/generate-icons.ts",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "test:e2e": "playwright test",
+    "screenshots": "SCREENSHOTS=1 playwright test e2e/screenshots.e2e.ts --workers=1"
   },
   "dependencies": {
     "lucide-react": "1.55.0",
@@ -30,6 +32,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/react": "16.3.3",
     "@types/bun": "latest",
