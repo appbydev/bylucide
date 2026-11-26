@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { ForwardRefExoticComponent, RefAttributes } from 'react';
-import { LucideProps as LucideProps$1 } from 'lucide-react';
+import { ForwardRefExoticComponent, RefAttributes, ComponentType } from 'react';
+import { LucideProps as LucideProps$1, LucideIcon as LucideIcon$1 } from 'lucide-react';
 
 var icons = [
 	"a-arrow-down",
@@ -7925,6 +7925,18 @@ var iconManifest = {
 	categories: categories
 };
 
+interface IconDriver {
+    play(signal: AbortSignal): Promise<void>;
+    reset(): void;
+}
+interface IconSvgProps {
+    size: number | string;
+    color?: string;
+    strokeWidth: number | string;
+    reduced?: boolean;
+    register(driver: IconDriver | null): void;
+}
+type IconSvg = ComponentType<IconSvgProps>;
 type NamedIconProps = Omit<IconProps, 'name'>;
 type IconComponent = ForwardRefExoticComponent<NamedIconProps & RefAttributes<SVGSVGElement>>;
 type LucideIcon = IconComponent;
@@ -7942,7 +7954,11 @@ interface IconProps extends Omit<LucideProps$1, 'ref'> {
     trigger?: 'parent' | 'self';
 }
 
-declare function createIcon(name: string): IconComponent;
+/**
+ * Builds a named icon. `svg` is the animated glyph and `fallback` the static Lucide
+ * component; both are imported per icon so bundlers keep only the icons an app uses.
+ */
+declare function createIcon(name: string, svg?: IconSvg, fallback?: LucideIcon$1): IconComponent;
 
 declare const AArrowDown: IconComponent;
 declare const AArrowDownIcon: IconComponent;
