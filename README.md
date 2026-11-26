@@ -27,7 +27,7 @@ Prints em 1280 × 800 gerados com Playwright: `bun run screenshots` (spec `e2e/s
 
 ## Stack
 
-- Biblioteca: React 18 ou superior (peer), TypeScript, `motion` 14.1.0 e `lucide-react` 1.55.0 (os dois embutidos no build pelo `tsup`).
+- Biblioteca: React 18 ou superior (peer), TypeScript, `motion` 14.1.0 e `lucide-react` 1.55.0 como dependências externas, para o bundler do app manter só os ícones importados.
 - Build: `tsup` (ESM + declarações em `dist/`), Bun para scripts e testes.
 - Demo: Vite 8, Tailwind CSS 4, ByUI com o tema `bylucide`, e os ícones do próprio `src/`.
 
