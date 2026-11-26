@@ -255,7 +255,7 @@ function App() {
                 </div>
               )}
               {icons.length === 0 && (
-                <Empty role="status" className="border border-input py-16">
+                <Empty role="status" className="rounded-(--radius-card) bg-muted py-16">
                   <EmptyHeader>
                     <EmptyMedia variant="icon" className="size-12">
                       <SearchIcon size={24} loop={false} />
