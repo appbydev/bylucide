@@ -131,18 +131,18 @@ function App() {
           <div className="shell hero-inner">
             <div className="flex min-w-0 flex-col items-start">
               <h1 className="hero-title">
-                <span className="line">Icons with</span>
-                <span className="line">a pulse</span>
+                <span className="line">Lucide icons</span>
+                <span className="line">that move</span>
               </h1>
               <svg className="pulse-mark" viewBox="0 0 240 24" aria-hidden="true" focusable="false">
                 <path className="pulse-line" d="M0 12 H72 L84 2 L98 22 L110 6 L122 12 H240" />
               </svg>
               <p className="max-w-[44ch] text-lg text-muted-foreground">
-                {total.toLocaleString('en-US')} Lucide icons that move. Search the set, pick a size, and preview each animation before you ship it.
+                {total.toLocaleString('en-US')} icons for React, each with its own animation. Search the set, pick a size and click an icon to copy its name.
               </p>
               <Button asChild size="lg" className="mt-8">
                 <a href="#catalog">
-                  Browse the collection
+                  Browse icons
                   <ArrowDownIcon />
                 </a>
               </Button>
@@ -177,7 +177,7 @@ function App() {
         <section className="shell catalog" id="catalog" aria-labelledby="catalog-title">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
             <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-tight">
-              Find your icon
+              Find an icon
             </h2>
             <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
               <strong className="font-semibold text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
@@ -219,10 +219,10 @@ function App() {
               <h3 className="text-lg">Motion preview</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {motion === 'hover'
-                  ? 'Hover or focus a tile to see its icon move.'
+                  ? 'Icons move when you point at them or focus them with the keyboard'
                   : motion === 'always'
-                    ? 'Visible icons animate continuously. Reduced-motion preferences are respected.'
-                    : 'Icon animations are turned off.'}
+                    ? 'Every icon on screen loops. If your system is set to reduce motion, they stay still'
+                    : 'Icons stay still'}
               </p>
             </div>
             <ToggleGroup
@@ -280,7 +280,7 @@ function App() {
       <footer className="border-t">
         <div className="shell flex flex-wrap justify-between gap-x-6 gap-y-2 py-6 text-sm text-muted-foreground">
           <span>ByLucide, animated icons for React</span>
-          <span>Icons by Lucide, © 2026</span>
+          <span>Icon artwork by the Lucide project</span>
         </div>
       </footer>
     </>
