@@ -55,3 +55,6 @@ Auditor `.r2/r4/slop-audit.mjs` em `/`, claro/escuro, 1440/390: 1 erro e 2 aviso
 - **Mundo.** Um mostruário de tipos móveis: folha clara, tinta preta, cada peça numa casa da gaveta.
 - **Momentos.** O cartão-amostra do hero (ícone grande em loop + o código que o gera) e o ícone que amplia e se mexe ao passar na casa da grade.
 - **Assinatura.** O traço de pulso desenhado uma vez sob o título. Só ali.
+
+### Depois (rodada 4)
+Auditor em `/`, claro/escuro, 1440/390: 0 erros, 0 avisos. Seleção (modo de animação, ícones do hero) é um degrau de superfície; títulos de display em peso 500; números num só formato; a caixa "Motion preview" virou uma linha da barra de ferramentas. Teste `e2e/visual-quality.e2e.ts` repete as checagens do auditor (o sufixo `.e2e.ts` é o que a config do Playwright coleta; `.spec.ts` seria pego pelo `bun test`).
