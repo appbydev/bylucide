@@ -211,38 +211,33 @@ function App() {
               <output className="min-w-[4ch] font-mono text-[0.8125rem] text-muted-foreground tabular-nums">{size}px</output>
             </div>
           </div>
-          <section
-            className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-(--radius-card) bg-muted p-4"
-            aria-label="Motion settings"
-          >
-            <div className="min-w-0 flex-[1_1_18rem]">
-              <h3 className="text-lg">Motion preview</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {motion === 'hover'
-                  ? 'Icons move when you point at them or focus them with the keyboard'
-                  : motion === 'always'
-                    ? 'Every icon on screen loops. If your system is set to reduce motion, they stay still'
-                    : 'Icons stay still'}
-              </p>
-            </div>
+          <section className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Motion settings">
+            <h3 className="text-sm font-medium">Animation</h3>
             <ToggleGroup
               type="single"
               spacing={1}
               value={motion}
               onValueChange={(value) => value && setMotion(value as Motion)}
               aria-label="Animation behavior"
-              className="rounded-(--radius-card) border bg-background p-1"
+              className="rounded-(--radius-card) bg-muted p-1"
             >
               {motionModes.map((mode) => (
                 <ToggleGroupItem
                   key={mode.value}
                   value={mode.value}
-                  className="px-4 text-muted-foreground data-[state=on]:bg-muted data-[state=on]:text-foreground"
+                  className="px-4 text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
                 >
                   {mode.label}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
+            <p className="min-w-0 flex-[1_1_16rem] text-sm text-muted-foreground">
+              {motion === 'hover'
+                ? 'Icons move when you point at them or focus them with the keyboard'
+                : motion === 'always'
+                  ? 'Every icon on screen loops. If your system is set to reduce motion, they stay still'
+                  : 'Icons stay still'}
+            </p>
           </section>
           <Tabs value={slug(group)} onValueChange={(value) => setGroup(groups.find((item) => slug(item) === value) ?? groups[0])} className="mt-6 gap-6">
             <TabsList variant="line" aria-label="Icon category" className="filters">
