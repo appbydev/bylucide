@@ -31,3 +31,27 @@ Movimento: `prefers-reduced-motion` desliga o traço (`stroke-dashoffset: 0`) e 
 ## Limitações conhecidas
 
 - O demo tem `dist/` versionado. O build desta rodada foi revertido com `git checkout -- demo/dist` e `git clean`, então o diff contém só `demo/index.html`, `demo/src/App.tsx` e `demo/src/style.css`.
+
+## Rodada 4 (unslop): auditoria e direção
+
+Leitura honesta: **slop leve**. A demo já tinha sido limpa na branch `feat/demo-unslop`. Modo polimento: corrigir só o que a auditoria achou, manter paleta, tipo, layout e a assinatura do pulso.
+
+### Auditoria (antes)
+Auditor `.r2/r4/slop-audit.mjs` em `/`, claro/escuro, 1440/390: 1 erro e 2 avisos por combinação.
+- `demo/src/App.tsx:283` `©` no rodapé conta como emoji (erro do auditor) e é ruído; o crédito ao Lucide fica sem ele.
+- `byui` tabs `p-[3px]` herdado na lista de categorias (`demo/src/style.css:195`): padding fora da grade de 4px.
+- `demo/src/App.tsx:252` contagem `1698` sem separador ao lado de `1,698` no título e no hero: dois formatos de número na mesma tela.
+- `demo/src/App.tsx:240` modo de movimento selecionado como bloco preto cheio (`bg-primary`): o seletor pesa mais que a busca e que o ícone do hero. Seleção deve ser um degrau de superfície, igual aos ícones do cartão do hero (`App.tsx:168`).
+- `demo/src/style.css:195` linha da lista de categorias termina no fim das abas (`w-fit`), não na largura da grade: a borda parece cortada.
+- `demo/src/App.tsx:133-141` título "Icons with a pulse" é slogan; não diz que é Lucide nem React. Subtítulo diz "before you ship it", frase de marketing.
+- `demo/src/App.tsx:145` "Browse the collection": rótulo longo para uma âncora.
+- `demo/src/App.tsx:219-225` caixa "Motion preview" com h3 + texto em painel cinza: um card a mais entre a busca e a grade; texto de "Always" fala de "Reduced-motion preferences", jargão.
+- `demo/src/style.css:96` `letter-spacing: -0.035em` no título, abaixo do limite de -0.03em.
+- `demo/src/App.tsx:268` título do vazio com `font-semibold` em 24px num lugar que não pede ênfase.
+
+### Direção
+- **Produto.** Um catálogo para achar, ver mexer e copiar o nome de 1.698 ícones Lucide animados para React.
+- **Caráter.** Exato, tipográfico, um pouco vivo.
+- **Mundo.** Um mostruário de tipos móveis: folha clara, tinta preta, cada peça numa casa da gaveta.
+- **Momentos.** O cartão-amostra do hero (ícone grande em loop + o código que o gera) e o ícone que amplia e se mexe ao passar na casa da grade.
+- **Assinatura.** O traço de pulso desenhado uma vez sob o título. Só ali.
