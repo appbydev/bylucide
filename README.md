@@ -1,163 +1,100 @@
-# ByLucide
+# bylucide
 
-Biblioteca interna de componentes React para ícones Lucide, com 1.698 implementações animadas locais e fallback estático do `lucide-react` para nomes disponíveis nele. A API inclui componentes nomeados, seleção dinâmica por nome e tipos TypeScript.
+Biblioteca React interna da appby com os ícones Lucide animados: 1.698 implementações animadas locais e fallback estático do `lucide-react` para os demais nomes, com a mesma API de nomes do `lucide-react`.
 
-## Sumário
+![Demo do bylucide](docs/screenshots/home-light.png)
 
-- [Requisitos](#requisitos)
-- [Preparação e consumo local](#preparação-e-consumo-local)
-- [Início rápido](#início-rápido)
-- [API e propriedades](#api-e-propriedades)
-- [Animação e acessibilidade](#animação-e-acessibilidade)
-- [Catálogo, aliases e criação de componentes](#catálogo-aliases-e-criação-de-componentes)
-- [Desenvolvimento](#desenvolvimento)
-- [Limites conhecidos](#limites-conhecidos)
+## O que faz
 
-## Requisitos
+- Exporta componentes nomeados iguais aos do `lucide-react` (`ArrowDownIcon`, `ChevronDown`, `LucideHouse`, aliases como `Home` e `Loader2`), cobrindo os 6.411 exports do `lucide-react@1.55.0`.
+- Seleciona ícones por nome em tempo de execução com `<Icon name="..." />`, `normalizeName` e o `manifest` com nomes e aliases.
+- Anima o ícone no hover e no foco de teclado do controle pai (botão, link, item de menu, opção de select, aba), com `loop="hover" | "always" | false` e `trigger="parent" | "self"`.
+- Respeita `prefers-reduced-motion` por padrão (`reducedMotion="system"`) e troca para o ícone estático do `lucide-react`.
+- Traz um demo (`demo/`) para buscar no catálogo, mudar o tamanho, comparar os modos de animação e copiar o nome do ícone.
 
-- React e React DOM **18 ou superior** no projeto consumidor (dependências peer).
-- Ambiente capaz de consumir módulos ESM e componentes React; para desenvolver e executar os scripts deste repositório, use Bun. O build utiliza `tsup` e TypeScript.
-- `lucide-react` e `motion` são dependências declaradas pela biblioteca. Ao integrar por caminho local, configure o projeto consumidor para resolvê-las e evitar instâncias duplicadas de React.
+## Telas
 
-## Preparação e consumo local
+As telas são do demo.
 
-Na raiz deste repositório:
+| Tela | Claro | Escuro |
+|---|---|---|
+| Início | ![](docs/screenshots/home-light.png) | ![](docs/screenshots/home-dark.png) |
+| Catálogo | ![](docs/screenshots/catalog-light.png) | ![](docs/screenshots/catalog-dark.png) |
+| Busca | ![](docs/screenshots/search-light.png) | ![](docs/screenshots/search-dark.png) |
+| Busca sem resultado | ![](docs/screenshots/empty-search-light.png) | ![](docs/screenshots/empty-search-dark.png) |
+
+Prints em 1280 × 800 gerados com Playwright: `bun run screenshots` (spec `e2e/screenshots.e2e.ts`).
+
+## Stack
+
+- Biblioteca: React 18 ou superior (peer), TypeScript, `motion` 14.1.0 e `lucide-react` 1.55.0 (os dois embutidos no build pelo `tsup`).
+- Build: `tsup` (ESM + declarações em `dist/`), Bun para scripts e testes.
+- Demo: Vite 8, Tailwind CSS 4, ByUI com o tema `bylucide`, e os ícones do próprio `src/`.
+
+## Rodar localmente
+
+Pré-requisitos: Bun (o CI usa 1.3.14). O demo instala o ByUI pelo git (`appbydev/byui`, privado), então é preciso acesso SSH ao GitHub.
 
 ```sh
 bun install
-bun run build
+bun run build        # biblioteca em dist/
+bun run demo         # demo em http://localhost:5409
+bun run demo:build   # demo em demo/dist; preview: bunx vite preview --config demo/vite.config.ts (porta 5419)
 ```
 
-O build cria `dist/index.js` (ESM), `dist/index.d.ts` e `dist/index.css`. Ao consumir o pacote compilado, importe `import 'bylucide/styles.css';` uma vez na entrada da aplicação: o JavaScript compilado não carrega o CSS automaticamente. No consumo por caminho local, importe `dist/index.css`, como no exemplo abaixo. Em uma aplicação local, aponte o import para esse arquivo **após o build**. Por exemplo, se as pastas estiverem dispostas como `workspace/bylucide` e `workspace/app/src`, a partir de um arquivo em `app/src`:
+Não há variáveis de ambiente.
 
-```tsx
-import '../../bylucide/dist/index.css';
-import { ArrowDownIcon } from '../../bylucide/dist/index.js';
+Para usar em outro projeto, instale pelo git com a tag da versão:
 
-export function Exemplo() {
-  return <ArrowDownIcon aria-label="Descer" />;
+```jsonc
+"dependencies": {
+  "bylucide": "git+https://github.com/appbydev/bylucide.git#v0.2.0"
 }
 ```
 
-Ajuste o caminho ao seu layout; garanta que o bundler da aplicação consiga resolver as dependências da biblioteca no uso por caminho local. Não há instrução de publicação ou instalação via registro npm aqui.
-
-## Início rápido
-
-Nos exemplos seguintes, substitua `../../bylucide/dist/index.js` pelo caminho local correspondente à aplicação:
-
 ```tsx
-import { ArrowDownIcon, Icon } from '../../bylucide/dist/index.js';
+import { ArrowDownIcon, Icon } from 'bylucide';
 
-export function Acoes() {
-  return (
-    <div>
-      <button type="button">
-        <ArrowDownIcon aria-hidden="true" /> Baixar
-      </button>
-      <Icon name="plane" aria-label="Avião" loop="always" size={32} />
-      <Icon name="calendar" aria-label="Calendário" loop={false} />
-    </div>
-  );
-}
-```
-
-`ArrowDownIcon` é um export nomeado animado; `<Icon name="..." />` resolve o nome em tempo de execução. `calendar` é um exemplo de fallback para ícone estático do `lucide-react`, sem versão animada no catálogo local.
-
-## API e propriedades
-
-`IconProps` é exportado como tipo. Todos os componentes recebem as propriedades abaixo, além dos atributos HTML válidos para um `span` (incluindo `className`, `style`, eventos e atributos `aria-*`). `createIcon` produz componentes com as mesmas propriedades, exceto `name`.
-
-| Propriedade | Tipo | Padrão | Efeito |
-| --- | --- | --- | --- |
-| `name` | `string` | `''` em `Icon` | Nome do ícone; use nomes do catálogo, aliases ou um nome resolvível por `lucide-react`. Nos componentes nomeados, o nome já está definido. |
-| `size` | `number` | `24` | Tamanho passado ao SVG. |
-| `color` | `string` | não definido | Cor passada ao SVG e aplicada ao `span`; sem valor, segue o estilo herdado do contexto. |
-| `strokeWidth` | `number` | `2` | Espessura do traço passada ao SVG. |
-| `loop` | `'hover' \| 'always' \| false` | `'hover'` | Controla a repetição da animação, quando houver implementação animada. |
-| `reducedMotion` | `'system' \| 'ignore'` | `'system'` | Respeita `prefers-reduced-motion: reduce` por padrão; `'ignore'` força a animação (use só em demos). |
-| `trigger` | `'parent' \| 'self'` | `'parent'` | Com `loop="hover"`, quem dispara a animação: o controle interativo mais próximo (botão, link, item de menu, opção de select, aba, `[data-icon-trigger]`) no hover com mouse e no foco por teclado, ou só o próprio ícone. |
-| `ref` | `React.Ref<HTMLSpanElement>` | não definido | Referência ao `span` externo, não ao SVG. |
-
-O elemento renderizado é um `span` com `display: inline-flex`, `vertical-align: middle` e `data-icon` com o nome normalizado. Eventos `onMouseEnter` e `onMouseLeave` fornecidos pelo consumidor são chamados junto com o controle interno do hover. Se nenhum SVG local ou estático puder ser resolvido, o componente retorna `null` (não cria `span`).
-
-## Animação e acessibilidade
-
-- `loop="hover"` (padrão): repete enquanto o controle pai estiver em hover (mouse ou caneta, nunca toque) ou com foco visível de teclado; ao sair, interrompe e retorna ao estado normal. Controles desabilitados não animam. Sem controle pai, reage ao ponteiro sobre o próprio ícone. `data-icon-trigger` em qualquer ancestral o torna o gatilho; `data-icon-trigger="self"` desliga o gatilho pelo pai naquele trecho.
-- `loop="always"`: repete enquanto o ícone estiver montado e apto a animar.
-- `loop={false}`: não inicia a animação; exibe a geometria do ícone. Para ícones estáticos de fallback, `loop` não produz animação.
-
-Sem `aria-label` ou `aria-labelledby`, o `span` é decorativo por padrão (`aria-hidden="true"`). Com um desses atributos, recebe `role="img"` por padrão e deixa de ser ocultado, salvo se você informar `aria-hidden` ou `role` explicitamente. Para um ícone que transmite significado, forneça um nome acessível; ao lado de texto que já comunica a ação, mantenha-o decorativo:
-
-```tsx
 <button type="button">
-  <ArrowDownIcon aria-hidden="true" /> Baixar
+  Baixar <ArrowDownIcon aria-hidden="true" />
 </button>
-<Icon name="plane" aria-label="Avião" />
+<Icon name="plane" aria-label="Avião" loop="always" />
 ```
 
-**Acessibilidade:** por padrão (`reducedMotion="system"`), quando `prefers-reduced-motion: reduce` está ativo, o runtime não inicia a animação e usa o componente estático do `lucide-react` se existir; sem equivalente estático, conserva a geometria local parada. A preferência é observada quando muda durante o uso. `reducedMotion="ignore"` força a animação e serve só para vitrines como o demo.
+A referência completa de propriedades (`name`, `size`, `color`, `strokeWidth`, `loop`, `reducedMotion`, `trigger`, `ref`), acessibilidade, catálogo, aliases, `createIcon` e limites conhecidos está em [docs/api.md](docs/api.md).
 
-## Catálogo, aliases e criação de componentes
-
-`src/icon-manifest.json` é exportado como `manifest`. `manifest.icons` é uma lista dos **1.698 nomes canônicos**; `manifest.aliases` mapeia grafias alternativas para nomes canônicos. A quantidade pode ser consultada com `manifest.icons.length`. Para consultar o catálogo completo, use [`src/icon-manifest.json`](src/icon-manifest.json) e os exports em [`src/icon-exports.ts`](src/icon-exports.ts).
-
-Todos os 6.411 exports de componentes do `lucide-react@1.55.0` são oferecidos pelo wrapper: `House`, `HouseIcon`, `LucideHouse` e aliases oficiais como `Home`, `Loader2`, `Code2` e `MoreHorizontal`. Os 14 ícones Lucide históricos removidos upstream (principalmente marcas) continuam disponíveis com suas animações locais. Não há aliases Iconoir.
-
-`normalizeName` aceita nomes oficiais PascalCase, variantes `Icon`/`Lucide` e suas grafias kebab-case; aliases apontam para a implementação animada local quando disponível. Nomes desconhecidos permanecem inalterados e `Icon` renderiza `null`. Não aceita sinônimos arbitrários como `airplane`, `attach-file` ou `key-circle`. `createIcon(name)` cria um componente com nome predefinido e `ref` para o `span`; não adiciona um novo SVG ao catálogo.
-
-Tipos públicos: `IconProps` para o seletor dinâmico, `NamedIconProps` e `IconComponent` para exports nomeados. `LucideProps` e `LucideIcon` são aliases de migração para esses tipos **do bylucide**, não o contrato SVG do pacote upstream: refs/eventos são de `HTMLSpanElement`, `size` é numérico e propriedades SVG específicas não são suportadas. Sem suporte React Native.
-
-Exemplos reais:
-
-```tsx
-import { Icon, createIcon, manifest, normalizeName } from '../../bylucide/dist/index.js';
-import type { IconProps } from '../../bylucide/dist/index.js';
-
-const PlaneIcon = createIcon('Plane'); // nome Lucide "plane"
-const canonical = normalizeName('ArrowDownIcon'); // "arrow-down"
-const numeric = normalizeName('ArrowDown01'); // "arrow-down-0-1"
-const available = manifest.icons.includes(canonical); // true
-const alias = manifest.aliases.house; // "home" (implementação animada local)
-
-export function Catalogo({ name }: { name: IconProps['name'] }) {
-  return (
-    <div>
-      <PlaneIcon aria-label="Avião" />
-      <Icon name={name ?? 'arrow-down'} aria-label="Ícone selecionado" />
-    </div>
-  );
-}
-```
-
-Para entradas de usuários, valide o nome antes de depender de sua presença. `Icon` procura primeiro uma implementação animada local; na ausência dela, tenta o nome correspondente em `lucide-react`. Se ambos falharem, renderiza `null`. O manifesto cobre o catálogo **animado local**, não todos os nomes estáticos aceitos pelo fallback.
-
-## Desenvolvimento
-
-Após atualizar a versão fixada de `lucide-react`, execute `bun run generate:icons` para regenerar exports, resolução e aliases por identidade dos componentes upstream; depois reconstrua `dist`.
-
-Execute na raiz:
+## Testes
 
 ```sh
-bun run typecheck  # checagem TypeScript sem emitir arquivos
-bun test           # testes com Bun
-bun run build      # ESM e declarações em dist/
+bun run typecheck   # TypeScript da biblioteca
+bun test            # unitários (catálogo, comportamento e renderização dos ícones)
+bun run test:e2e    # Playwright no demo, servido com vite preview na porta 5419
 ```
 
-Arquivos principais:
+O e2e (`e2e/catalog.e2e.ts`) cobre o seletor do hero, a busca com estado vazio, as abas de categoria, o slider de tamanho, os modos de animação, a cópia do nome, a ausência de overflow em 390 px (claro e escuro) e que cada célula anima o próprio ícone no hover e no foco. Na primeira vez, rode `bunx playwright install chromium`.
 
-| Caminho | Finalidade |
-| --- | --- |
-| `src/index.tsx`, `src/types.ts` | API pública e contrato das propriedades. |
-| `src/icon-runtime.tsx`, `src/icon-factory.tsx` | Renderização, animação, fallback e criação de componentes. |
-| `src/icon-exports.ts`, `src/icon-registry.ts`, `src/icons/` | Exports nomeados, registro e módulos locais de ícones. |
-| `src/icon-manifest.json` | Lista de ícones e aliases. |
-| `src/index.test.tsx` | Testes de catálogo, comportamento e renderização. |
+## Estrutura
 
-O build utiliza os módulos locais em `src/icons/`; não requer clonagem de outros repositórios nem geração dos ícones durante a instalação.
+```
+src/                  biblioteca: API pública, runtime, registro e ícones animados
+  icons/              um módulo por ícone animado
+  icon-manifest.json  nomes canônicos e aliases
+scripts/              generate-icons.ts e o script de versionamento (ci/)
+dist/                 build publicado (consumido pelo git)
+demo/                 demo do catálogo (Vite + ByUI)
+e2e/                  testes Playwright do demo e gerador de prints
+docs/                 referência da API e prints
+```
 
-## Limites conhecidos
+Após atualizar a versão fixada de `lucide-react`, rode `bun run generate:icons` para regenerar exports, resolução e aliases, e reconstrua `dist`.
 
-- Nem todo nome de `lucide-react` tem animação local; o fallback estático depende de existir um export correspondente na versão instalada de `lucide-react`. Nomes não resolvidos não exibem marcador de erro: renderizam `null`.
-- O hover é acionado por entrada e saída do **ponteiro** (`onMouseEnter`/`onMouseLeave`); não há gatilho próprio por foco de teclado ou toque. Evite depender da animação para transmitir informação essencial.
-- Os testes cobrem catálogo e renderização, mas não substituem a inspeção visual e de comportamento dos 1.698 ícones em navegadores reais. Algumas animações têm repetição infinita interna; o runtime interrompe controles ao encerrar um ciclo de hover ou desmontar.
-- O registro importa os módulos locais e o runtime importa o conjunto de ícones do `lucide-react`; não presuma redução garantida do pacote final ao importar apenas um componente nomeado.
+## Deploy e versionamento
+
+O demo vai para o GitHub Pages pelo workflow `pages.yml` a cada push na `main`.
+
+Versionamento automático (`release.yml`): cada push na `main` gera versão, tag e release a partir dos Conventional Commits (`feat!` major, `feat` minor, `fix`/`refactor`/`perf` patch; `chore`/`ci`/`docs`/`style`/`test` sem release). Os projetos sobem de versão trocando a tag no `package.json`. O CI precisa do secret `BYUI_READ_TOKEN` para instalar o ByUI.
+
+## Documentação
+
+- [docs/api.md](docs/api.md): API, acessibilidade, catálogo e limites conhecidos
+- [DESIGN.md](DESIGN.md): contrato de design do demo
