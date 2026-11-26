@@ -12,3 +12,10 @@ node_modules
 # Playwright
 test-results
 playwright-report
+
+# Editores e agentes
+.worktrees
+.maestri
+.claude/settings.local.json
+.playwright-mcp/
+.superpowers/
