@@ -94,7 +94,7 @@ Para entradas de usuários, valide o nome antes de depender de sua presença. `I
 
 ## Limites conhecidos
 
-- Nem todo nome de `lucide-react` tem animação local; o fallback estático depende de existir um export correspondente na versão de `lucide-react` embutida no build. Nomes não resolvidos não exibem marcador de erro: renderizam `null`.
+- Nem todo nome de `lucide-react` tem animação local; o fallback estático depende de existir um export correspondente na versão de `lucide-react` instalada (dependência externa do pacote, não embutida no build). Nomes não resolvidos não exibem marcador de erro: renderizam `null`.
 - No toque não há animação por hover; o foco por teclado só dispara quando é visível (`:focus-visible`). Evite depender da animação para transmitir informação essencial.
 - Os testes cobrem catálogo e renderização, mas não substituem a inspeção visual e de comportamento dos 1.698 ícones em navegadores reais. Algumas animações têm repetição infinita interna; o runtime interrompe controles ao encerrar um ciclo de hover ou desmontar.
-- O registro importa os módulos locais e o runtime importa o conjunto de ícones do `lucide-react`; não presuma redução garantida do pacote final ao importar apenas um componente nomeado.
+- Componentes nomeados (`import { DownloadIcon } from 'bylucide'`) são tree-shakable: cada um importa só o próprio glifo e o próprio componente do `lucide-react`, e o bundler do app descarta o resto. `<Icon name="...">` resolve o nome em tempo de execução e por isso carrega o catálogo inteiro; use-o só quando o nome vier de dados.
