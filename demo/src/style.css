@@ -204,6 +204,7 @@ svg[data-icon] {
 }
 
 .filters [data-slot="tabs-trigger"] {
+  flex: none;
   height: 2.75rem;
 }
 

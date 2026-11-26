@@ -257,7 +257,7 @@ function App() {
               {icons.length === 0 && (
                 <Empty role="status" className="rounded-(--radius-card) bg-muted py-16">
                   <EmptyHeader>
-                    <EmptyMedia variant="icon" className="size-12">
+                    <EmptyMedia variant="icon" className="size-12 bg-background">
                       <SearchIcon size={24} loop={false} />
                     </EmptyMedia>
                     <EmptyTitle className="text-2xl font-medium [overflow-wrap:anywhere]">
