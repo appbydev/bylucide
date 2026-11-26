@@ -92,7 +92,7 @@ Após atualizar a versão fixada de `lucide-react`, rode `bun run generate:icons
 
 O demo vai para o GitHub Pages pelo workflow `pages.yml` a cada push na `main`.
 
-Versionamento automático (`release.yml`): cada push na `main` gera versão, tag e release a partir dos Conventional Commits (`feat!` major, `feat` minor, `fix`/`refactor`/`perf` patch; `chore`/`ci`/`docs`/`style`/`test` sem release). Os projetos sobem de versão trocando a tag no `package.json`. O CI precisa do secret `BYUI_READ_TOKEN` para instalar o ByUI.
+Versionamento automático (`release.yml`): cada push na `main` gera versão, tag e release a partir dos Conventional Commits (`feat!` major, `feat` minor, `fix`/`refactor`/`perf` patch; `chore`/`ci`/`docs`/`style`/`test` sem release). Os projetos sobem de versão trocando a tag no `package.json`. O CI precisa do secret `BYUI_DEPLOY_KEY` (deploy key somente leitura do repositório `byui`) para instalar o ByUI.
 
 ## Documentação
 
