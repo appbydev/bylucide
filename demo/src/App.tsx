@@ -212,7 +212,7 @@ function App() {
             </div>
           </div>
           <section className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Motion settings">
-            <h3 className="text-sm font-medium">Animation</h3>
+            <h3 className="font-sans text-sm font-medium tracking-normal">Animation</h3>
             <ToggleGroup
               type="single"
               spacing={1}
