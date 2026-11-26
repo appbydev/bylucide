@@ -192,41 +192,17 @@ svg[data-icon] {
   scroll-margin-top: 1rem;
 }
 
-.size-range {
-  width: 8rem;
-  height: 2.75rem;
-  margin: 0;
-  accent-color: var(--primary);
-}
-
 .filters {
   max-width: 100%;
+  height: auto;
   overflow-x: auto;
   justify-content: flex-start;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  height: auto;
 }
 
-/* Radix marks state with data-state/data-orientation; the byui tabs classes expect data-active/data-horizontal. */
 .filters [data-slot="tabs-trigger"] {
-  flex: none;
   height: 2.75rem;
-}
-
-.filters [data-slot="tabs-trigger"][data-state="active"] {
-  color: var(--foreground);
-}
-
-.filters [data-slot="tabs-trigger"]::after {
-  inset-inline: 0;
-  bottom: -0.5rem;
-  height: 2px;
-}
-
-.filters [data-slot="tabs-trigger"][data-state="active"]::after {
-  opacity: 1;
 }
 
 .grid {

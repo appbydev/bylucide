@@ -1,9 +1,10 @@
+import { ArrowDownIcon, ArrowUpRightIcon, Icon, manifest, SearchIcon, XIcon } from 'bylucide';
 import { Button } from 'byui/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from 'byui/empty';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from 'byui/input-group';
+import { Slider } from 'byui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'byui/tabs';
 import { ToggleGroup, ToggleGroupItem } from 'byui/toggle-group';
-import { ArrowDownIcon, ArrowUpRightIcon, Icon, manifest, SearchIcon, XIcon } from 'bylucide';
 import { type CSSProperties, memo, useEffect, useMemo, useRef, useState } from 'react';
 
 type Motion = 'hover' | 'always' | 'off';
@@ -119,7 +120,7 @@ function App() {
           <a className="font-heading text-xl font-semibold tracking-tight text-foreground no-underline" href={import.meta.env.BASE_URL}>
             ByLucide
           </a>
-          <a className="link" href="https://github.com" target="_blank" rel="noreferrer">
+          <a className="link" href="https://github.com/appbydev/bylucide" target="_blank" rel="noreferrer">
             View on GitHub
             <ArrowUpRightIcon size={16} />
           </a>
@@ -204,11 +205,11 @@ function App() {
                 </InputGroupAddon>
               )}
             </InputGroup>
-            <label className="flex min-h-12 items-center gap-3 text-sm font-medium">
-              <span>Size</span>
-              <input className="size-range" type="range" min="18" max="48" value={size} onChange={(e) => setSize(+e.target.value)} aria-label="Icon size" />
+            <div className="flex min-h-12 items-center gap-3 text-sm font-medium">
+              <span aria-hidden="true">Size</span>
+              <Slider className="w-32" min={18} max={48} value={[size]} onValueChange={([value]) => setSize(value ?? 28)} aria-label="Icon size" />
               <output className="min-w-[4ch] font-mono text-[0.8125rem] text-muted-foreground tabular-nums">{size}px</output>
-            </label>
+            </div>
           </div>
           <section
             className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-(--radius-card) bg-muted p-4"
@@ -243,11 +244,7 @@ function App() {
               ))}
             </ToggleGroup>
           </section>
-          <Tabs
-            value={slug(group)}
-            onValueChange={(value) => setGroup(groups.find((item) => slug(item) === value) ?? groups[0])}
-            className="mt-6 flex-col gap-6"
-          >
+          <Tabs value={slug(group)} onValueChange={(value) => setGroup(groups.find((item) => slug(item) === value) ?? groups[0])} className="mt-6 gap-6">
             <TabsList variant="line" aria-label="Icon category" className="filters">
               {groups.map((item, i) => (
                 <TabsTrigger key={item} value={slug(item)} className="px-3">
