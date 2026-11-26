@@ -186,7 +186,7 @@ function App() {
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
             <InputGroup className="h-12 flex-[1_1_18rem] bg-card">
               <InputGroupAddon>
-                <SearchIcon size={18} />
+                <SearchIcon size={16} />
               </InputGroupAddon>
               <InputGroupInput
                 value={query}
