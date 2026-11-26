@@ -38,7 +38,7 @@
     "@types/bun": "latest",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "byui": "git+ssh://git@github.com/appbydev/byui.git#refactor/rename-byui",
+    "byui": "git+ssh://git@github.com/appbydev/byui.git#v0.2.0",
     "happy-dom": "21.0.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
