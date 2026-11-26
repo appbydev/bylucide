@@ -92,8 +92,9 @@ svg[data-icon] {
 
 .hero-title {
   font-size: clamp(3rem, 12vw, 6rem);
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .hero-title .line {

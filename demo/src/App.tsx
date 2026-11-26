@@ -176,11 +176,11 @@ function App() {
         </section>
         <section className="shell catalog" id="catalog" aria-labelledby="catalog-title">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-            <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-tight">
+            <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] font-medium tracking-tight">
               Find an icon
             </h2>
             <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              <strong className="font-semibold text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
+              <strong className="font-medium text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
             </p>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
@@ -249,7 +249,7 @@ function App() {
               {groups.map((item, i) => (
                 <TabsTrigger key={item} value={slug(item)} className="px-3">
                   {item}
-                  {i === 0 && <span className="font-mono text-xs text-muted-foreground tabular-nums">{total}</span>}
+                  {i === 0 && <span className="font-mono text-xs text-muted-foreground tabular-nums">{total.toLocaleString('en-US')}</span>}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -265,7 +265,7 @@ function App() {
                     <EmptyMedia variant="icon" className="size-12">
                       <SearchIcon size={24} loop={false} />
                     </EmptyMedia>
-                    <EmptyTitle className="text-2xl font-semibold [overflow-wrap:anywhere]">
+                    <EmptyTitle className="text-2xl font-medium [overflow-wrap:anywhere]">
                       {query.trim() ? `No icons match “${query.trim()}”` : 'No icons in this category'}
                     </EmptyTitle>
                     <EmptyDescription className="text-base">Check the spelling, try a shorter word, or browse another category.</EmptyDescription>
