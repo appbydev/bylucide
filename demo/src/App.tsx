@@ -231,13 +231,13 @@ function App() {
               value={motion}
               onValueChange={(value) => value && setMotion(value as Motion)}
               aria-label="Animation behavior"
-              className="rounded-(--radius-card) border bg-card p-1"
+              className="rounded-(--radius-card) border bg-background p-1"
             >
               {motionModes.map((mode) => (
                 <ToggleGroupItem
                   key={mode.value}
                   value={mode.value}
-                  className="px-4 text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="px-4 text-muted-foreground data-[state=on]:bg-muted data-[state=on]:text-foreground"
                 >
                   {mode.label}
                 </ToggleGroupItem>
