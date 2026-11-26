@@ -1,9 +1,16 @@
+import { ThemeProvider } from 'byui/providers/theme-provider';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '@fontsource-variable/bricolage-grotesque';
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
 import App from './App';
 import './style.css';
 
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+const root = document.getElementById('root');
+if (!root) throw new Error('Missing #root');
+
+createRoot(root).render(
+  <React.StrictMode>
+    <ThemeProvider defaultTheme="system" storageKey="bylucide-theme">
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+);
