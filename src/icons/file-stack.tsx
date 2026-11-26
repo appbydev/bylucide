@@ -10,7 +10,7 @@ export default function IconSvg({ size, color, strokeWidth, register }: IconSvgP
  
  useControlsDriver(register, controls);
  return (<SvgRoot  style={{ color, overflow: 'hidden' }} fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-          <motion.path animate={controls} d="M21 7h-3a2 0 0 1-2-2V2" variants={{
+          <motion.path animate={controls} d="M21 7h-3a2 2 0 0 1-2-2V2" variants={{
         normal: { translateX: 0, translateY: 0 },
         animate: { translateX: -1, translateY: 1 },
     }}/>

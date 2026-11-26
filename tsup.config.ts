@@ -5,6 +5,7 @@ export default defineConfig({
 	format: ["esm"],
 	dts: true,
 	outDir: "dist",
-	external: ["react", "react-dom"],
-	noExternal: ["motion", "lucide-react"],
+	// lucide-react and motion stay external (they are dependencies with sideEffects: false),
+	// so the app bundler keeps only the icons it imports.
+	external: ["react", "react-dom", "motion", "lucide-react"],
 });
