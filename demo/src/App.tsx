@@ -131,18 +131,18 @@ function App() {
           <div className="shell hero-inner">
             <div className="flex min-w-0 flex-col items-start">
               <h1 className="hero-title">
-                <span className="line">Icons with</span>
-                <span className="line">a pulse</span>
+                <span className="line">Lucide icons</span>
+                <span className="line">that move</span>
               </h1>
               <svg className="pulse-mark" viewBox="0 0 240 24" aria-hidden="true" focusable="false">
                 <path className="pulse-line" d="M0 12 H72 L84 2 L98 22 L110 6 L122 12 H240" />
               </svg>
               <p className="max-w-[44ch] text-lg text-muted-foreground">
-                {total.toLocaleString('en-US')} Lucide icons that move. Search the set, pick a size, and preview each animation before you ship it.
+                {total.toLocaleString('en-US')} icons for React, each with its own animation. Search the set, pick a size and click an icon to copy its name.
               </p>
               <Button asChild size="lg" className="mt-8">
                 <a href="#catalog">
-                  Browse the collection
+                  Browse icons
                   <ArrowDownIcon />
                 </a>
               </Button>
@@ -176,17 +176,17 @@ function App() {
         </section>
         <section className="shell catalog" id="catalog" aria-labelledby="catalog-title">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-            <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-tight">
-              Find your icon
+            <h2 id="catalog-title" className="text-[clamp(2rem,6vw,3rem)] leading-[1.05] font-medium tracking-tight">
+              Find an icon
             </h2>
             <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              <strong className="font-semibold text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
+              <strong className="font-medium text-foreground">{icons.length.toLocaleString('en-US')}</strong> of {total.toLocaleString('en-US')} icons
             </p>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
             <InputGroup className="h-12 flex-[1_1_18rem] bg-card">
               <InputGroupAddon>
-                <SearchIcon size={18} />
+                <SearchIcon size={16} />
               </InputGroupAddon>
               <InputGroupInput
                 value={query}
@@ -211,45 +211,40 @@ function App() {
               <output className="min-w-[4ch] font-mono text-[0.8125rem] text-muted-foreground tabular-nums">{size}px</output>
             </div>
           </div>
-          <section
-            className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-(--radius-card) bg-muted p-4"
-            aria-label="Motion settings"
-          >
-            <div className="min-w-0 flex-[1_1_18rem]">
-              <h3 className="text-lg">Motion preview</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {motion === 'hover'
-                  ? 'Hover or focus a tile to see its icon move.'
-                  : motion === 'always'
-                    ? 'Visible icons animate continuously. Reduced-motion preferences are respected.'
-                    : 'Icon animations are turned off.'}
-              </p>
-            </div>
+          <section className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Motion settings">
+            <h3 className="font-sans text-sm font-medium tracking-normal">Animation</h3>
             <ToggleGroup
               type="single"
               spacing={1}
               value={motion}
               onValueChange={(value) => value && setMotion(value as Motion)}
               aria-label="Animation behavior"
-              className="rounded-(--radius-card) border bg-card p-1"
+              className="rounded-(--radius-card) bg-muted p-1"
             >
               {motionModes.map((mode) => (
                 <ToggleGroupItem
                   key={mode.value}
                   value={mode.value}
-                  className="px-4 text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="px-4 text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
                 >
                   {mode.label}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
+            <p className="min-w-0 flex-[1_1_16rem] text-sm text-muted-foreground">
+              {motion === 'hover'
+                ? 'Icons move when you point at them or focus them with the keyboard'
+                : motion === 'always'
+                  ? 'Every icon on screen loops. If your system is set to reduce motion, they stay still'
+                  : 'Icons stay still'}
+            </p>
           </section>
           <Tabs value={slug(group)} onValueChange={(value) => setGroup(groups.find((item) => slug(item) === value) ?? groups[0])} className="mt-6 gap-6">
             <TabsList variant="line" aria-label="Icon category" className="filters">
               {groups.map((item, i) => (
                 <TabsTrigger key={item} value={slug(item)} className="px-3">
                   {item}
-                  {i === 0 && <span className="font-mono text-xs text-muted-foreground tabular-nums">{total}</span>}
+                  {i === 0 && <span className="font-mono text-xs text-muted-foreground tabular-nums">{total.toLocaleString('en-US')}</span>}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -260,12 +255,12 @@ function App() {
                 </div>
               )}
               {icons.length === 0 && (
-                <Empty role="status" className="border border-input py-16">
+                <Empty role="status" className="rounded-(--radius-card) bg-muted py-16">
                   <EmptyHeader>
-                    <EmptyMedia variant="icon" className="size-12">
+                    <EmptyMedia variant="icon" className="size-12 bg-background">
                       <SearchIcon size={24} loop={false} />
                     </EmptyMedia>
-                    <EmptyTitle className="text-2xl font-semibold [overflow-wrap:anywhere]">
+                    <EmptyTitle className="text-2xl font-medium [overflow-wrap:anywhere]">
                       {query.trim() ? `No icons match “${query.trim()}”` : 'No icons in this category'}
                     </EmptyTitle>
                     <EmptyDescription className="text-base">Check the spelling, try a shorter word, or browse another category.</EmptyDescription>
@@ -280,7 +275,7 @@ function App() {
       <footer className="border-t">
         <div className="shell flex flex-wrap justify-between gap-x-6 gap-y-2 py-6 text-sm text-muted-foreground">
           <span>ByLucide, animated icons for React</span>
-          <span>Icons by Lucide, © 2026</span>
+          <span>Icon artwork by the Lucide project</span>
         </div>
       </footer>
     </>

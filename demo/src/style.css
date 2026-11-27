@@ -92,17 +92,18 @@ svg[data-icon] {
 
 .hero-title {
   font-size: clamp(3rem, 12vw, 6rem);
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .hero-title .line {
   display: block;
-  animation: reveal 900ms var(--ease-out) both;
+  animation: reveal 560ms var(--ease-out) both;
 }
 
 .hero-title .line:nth-child(2) {
-  animation-delay: 100ms;
+  animation-delay: 60ms;
 }
 
 @keyframes reveal {
@@ -193,15 +194,17 @@ svg[data-icon] {
 }
 
 .filters {
+  width: 100%;
   max-width: 100%;
   height: auto;
   overflow-x: auto;
   justify-content: flex-start;
-  padding-bottom: 0.5rem;
+  padding: 0 0 0.25rem;
   border-bottom: 1px solid var(--border);
 }
 
 .filters [data-slot="tabs-trigger"] {
+  flex: none;
   height: 2.75rem;
 }
 

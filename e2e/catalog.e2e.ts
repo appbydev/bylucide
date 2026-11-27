@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('hero shows real icons and links to the catalog', async ({ page }) => {
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Icons witha pulse');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lucide iconsthat move');
   await expect(page.getByRole('link', { name: 'View on GitHub' })).toHaveAttribute('href', 'https://github.com/appbydev/bylucide');
   const picker = page.getByRole('radiogroup', { name: 'Preview icon' });
   await expect(picker.getByRole('radio')).toHaveCount(6);
@@ -32,9 +32,9 @@ test('hero shows real icons and links to the catalog', async ({ page }) => {
   await expectAnimates(rocket, () => rocket.hover());
   await rocket.click();
   await expect(page.locator('.specimen code')).toHaveText('<Icon name="rocket" loop="always" />');
-  await page.getByRole('link', { name: 'Browse the collection' }).click();
+  await page.getByRole('link', { name: 'Browse icons' }).click();
   await expect(page).toHaveURL(/#catalog$/);
-  await expect(page.getByRole('heading', { name: 'Find your icon' })).toBeInViewport();
+  await expect(page.getByRole('heading', { name: 'Find an icon' })).toBeInViewport();
 });
 
 test('search filters the grid, shows the empty state and clears', async ({ page }) => {
@@ -84,11 +84,11 @@ test('size slider resizes the icons from the keyboard', async ({ page }) => {
 test('motion modes switch the preview behaviour', async ({ page }) => {
   const modes = page.getByRole('radiogroup', { name: 'Animation behavior' });
   await expect(modes.getByRole('radio', { name: 'On hover' })).toBeChecked();
-  await expect(page.getByText('Hover or focus a tile to see its icon move.')).toBeVisible();
+  await expect(page.getByText('Icons move when you point at them or focus them with the keyboard')).toBeVisible();
   await modes.getByRole('radio', { name: 'Always' }).click();
-  await expect(page.getByText(/Visible icons animate continuously/)).toBeVisible();
+  await expect(page.getByText(/Every icon on screen loops/)).toBeVisible();
   await modes.getByRole('radio', { name: 'Off' }).click();
-  await expect(page.getByText('Icon animations are turned off.')).toBeVisible();
+  await expect(page.getByText('Icons stay still')).toBeVisible();
 });
 
 test('each tile animates its own icon on hover and keyboard focus', async ({ page }) => {
